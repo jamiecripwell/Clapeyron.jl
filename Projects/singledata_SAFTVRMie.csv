@@ -1,0 +1,5 @@
+Clapeyron Database File
+SAFTVRMie Parameters [csvtype = like, grouptype = unknown]
+species,Mw,segment,sigma,lambda_a,lambda_r,epsilon,n_e,n_H
+methanol,32.042,4.727032088384609,3.1068820741104988,6.0,21.638847780543024,132.76792271364388,2,1
+hexane,86.18,2.1097,4.423,6.0,17.203,354.38,0,0

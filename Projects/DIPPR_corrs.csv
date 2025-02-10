@@ -1,0 +1,690 @@
+﻿"1,3,5-trimethylbenzene",ideal gas isobaric heat capacity,107,298.15,1500,113070,277060,820.04,142980,2442.1
+"1,3,5-trimethylbenzene",heat of vaporization,106,228.42,637.3,59365000,0.35743,0,0,0
+"1,3,5-trimethylbenzene",vapour pressure,101,228.42,637.3,88.697,-8317,-9.733,5.32E-06,2
+"1,3,5-trimethylbenzene",liquid density,105,228.42,637.3,0.59881,0.25916,637.3,0.27961,0
+"1,3,5-trimethylbenzene",liquid isobaric heat capacity,100,230,640,1,1,1,1,1
+"1,3,5-trimethylbenzene",second viral coefficients,104,240,650,1,1,1,1,1
+1-butanol,vapour pressure,101,183.85,563.1,106.29483,-9866.355,-11.6553,1.08E-17,6
+1-butanol,liquid density,105,183.85,563.1,0.98279,0.2683,563.1,0.25488,
+1-butanol,ideal gas isobaric heat capacity,107,298.15,1500,74540,259070,1607.3,173200,712.4
+1-butanol,liquid isobaric heat capacity,100,183.85,391,191200,-730.4,2.2998,,
+1-butanol,heat of vaporization,106,183.85,563.1,71274000,0.0483,0.8966,-0.5116,
+1-butanol,second viral coefficients,104,281.5,1500,0.314,-283.07,-0.001075,-5.26E+20,-1.83E+22
+1-decanol,vapour pressure,101,280.05,688,156.23933,-15212.3,-18.42393,8.50E-18,6
+1-decanol,liquid density,105,280.05,688,0.38208,0.24645,688,0.26125,
+1-decanol,ideal gas isobaric heat capacity,107,298.15,1500,169840,539200,1568,393800,720.5
+1-decanol,liquid isobaric heat capacity,100,280,503.15,4988500,-52898,216.35,-0.37538,0.00023674
+1-decanol,heat of vaporization,106,280.05,688,79041000,-1.36,4.0854,-2.3871,
+1-decanol,second viral coefficients,104,343.65,1500,0.4274,-335.3171,-194370000,-3.04E+21,3.98E+22
+1-decene,vapour pressure,101,206.89,616.6,68.401,-7776.9,-6.4637,6.38E-18,6
+1-decene,liquid density,105,206.89,616.6,0.43981,0.25661,616.6,0.29148,0
+1-decene,liquid isobaric heat capacity,100,200,700,1,1,1,1,1
+1-decene,second viral coefficients,104,200,400,1,1,1,1,1
+1-decene,heat of vaporization,106,206.89,616.6,66985000,0.76944,-0.79975,0.42379,0
+1-decene,ideal gas isobaric heat capacity,107,298.15,1500,171010,520890,1726.5,359350,782.92
+1-docosanol,vapour pressure,101,,,100,52,1,1,1
+1-docosanol,liquid density,105,,,1,1,1,1,1
+1-docosanol,liquid isobaric heat capacity,100,,,1,1,1,1,1
+1-docosanol,ideal gas isobaric heat capacity,107,,,1,1,1,1,1
+1-docosanol,heat of vaporization,106,,,1,1,1,1,1
+1-docosanol,second viral coefficients,104,,,1,1,1,1,1
+1-dodecene,liquid density,105,237.95,657.1,0.3393,0.246,657.1,0.28571,0
+1-dodecene,vapour pressure,101,237.95,657.1,82.022,-9485.6,-8.2517,4.98E-18,6
+1-dodecene,heat of vaporization,106,237.95,657.1,79393000,0.67288,-0.44972,0.17322,0
+1-dodecene,ideal gas isobaric heat capacity,107,298.15,1500,216430,427460,815.94,264900,2417.3
+1-dodecene,liquid isobaric heat capacity,100,300,500,1,1,1,1,1
+1-dodecene,second viral coefficients,104,200,500,1,1,1,1,1
+1-heptanol,vapour pressure,101,239.15,632.3,147.41,-13466,-17.353,1.13E-17,6
+1-heptanol,liquid density,105,239.15,632.3,0.55687,0.24725,632.3,0.31471,0
+1-heptanol,ideal gas isobaric heat capacity,107,298.15,1500,122150,399100,1580,283500,717.7
+1-heptanol,liquid isobaric heat capacity,100,239.15,448.6,2416800,-26105,110.03,-0.19172,11968
+1-heptanol,heat of vaporization,106,239.15,632.3,70236000,-1.3652,3.987,-2.2545,0
+1-heptanol,second viral coefficients,104,316.3,1500,0.367,-444.56,-42310000,8.08E+20,-4.40E+23
+1-heptene,ideal gas isobaric heat capacity,107,298.15,1500,118510,363620,1735.9,250480,785.73
+1-heptene,vapour pressure,101,154.12,537.4,65.922,-6189,-6.3629,2.01E-17,6
+1-heptene,heat of vaporization,106,154.12,537.4,49437000,0.35428,0.22149,-0.2353,0
+1-heptene,second viral coefficients,104,200,500,1,1,1,1,1
+1-heptene,liquid isobaric heat capacity,100,200,500,1,1,1,1,1
+1-heptene,liquid density,105,154.12,537.4,0.66016,0.26657,537.4,0.28571,0
+1-hexadecanol,vapour pressure,101,322.35,768,186.19015,-19522.8,-22.25759,6.31E-18,6
+1-hexadecanol,liquid density,105,322.35,768.6,0.20634,0.22285,768.6,0.27841,
+1-hexadecanol,ideal gas isobaric heat capacity,107,298.15,1500,263100,811370,1502.2,588800,708
+1-hexadecanol,liquid isobaric heat capacity,100,322.35,598,-2230590,18287.2,-37.96571,0.026475,
+1-hexadecanol,heat of vaporization,106,322.35,768.6,110640000,-1.0625,3.9479,-2.5726,
+1-hexadecanol,second viral coefficients,104,385,1500,0.7438,-501.7379,-574230000,-1.19E+22,2.90E+23
+1-hexanol,vapour pressure,101,228.55,611.3,135.42149,-12288.4,-15.73191,1.27E-17,6
+1-hexanol,liquid density,105,228.55,611.3,0.70093,0.26776,611.3,0.24919,0
+1-hexanol,ideal gas isobaric heat capacity,107,298.15,1500,106250,352100,1583.5,246200,715.75
+1-hexanol,liquid isobaric heat capacity,100,228.55,460,1638600,-17261,71.721,-0.12026,7.11E-05
+1-hexanol,heat of vaporization,106,228.55,611.3,70350000,-0.9575,3.1431,-1.8066,0
+1-hexanol,second viral coefficients,104,305.15,1500,-366.72,-34040000,5.67E+20,-2.86E+23,0
+1-methylnaphthalene,heat of vaporization,106,242.67,772,68612000,0.34958,0,0,0
+1-methylnaphthalene,ideal gas isobaric heat capacity,107,298.15,1500,115680,293550,779.37,129120,2426.5
+1-methylnaphthalene,liquid density,105,242.67,772,0.54778,0.25357,772,0.28041,
+1-methylnaphthalene,vapour pressure,101,242.67,772,67.566,-8737,-6.3362,1.64E-06,2
+1-methylnaphthalene,liquid isobaric heat capacity,100,250,500,1,1,1,1,1
+1-methylnaphthalene,second viral coefficients,104,200,500,1,1,1,1,1
+1-nonanol,vapour pressure,101,670.9,268.15,162.854,-15204.6,-19.42436,1.07E-17,6
+1-nonanol,liquid density,105,268.15,670.9,0.43682,0.25161,670.9,0.2498,
+1-nonanol,ideal gas isobaric heat capacity,107,298.15,1500,154000,493600,1578,358800,721.11
+1-nonanol,liquid isobaric heat capacity,100,310,460,10483000,-115220,476.87,-0.85381,0.00056246
+1-nonanol,heat of vaporization,106,268.15,670.9,75429000,-1.5966,4.6489,-2.7229,
+1-nonanol,second viral coefficients,104,335.35,1500,0.3809,-300.1714,-156110000,-2.30E+21,2.62E+22
+1-octanol,vapour pressure,101,257.65,652.3,144.11083,-13667.2,-16.82611,9.37E-18,6
+1-octanol,liquid density,105,257.65,652.3,0.48979,0.24931,652.3,0.27824,0
+1-octanol,ideal gas isobaric heat capacity,107,298.15,1500,138050,445900,1575.1,320160,718.8
+1-octanol,liquid isobaric heat capacity,100,250,467.1,571370,-4849,19.725,-0.021532,0
+1-octanol,heat of vaporization,106,257.65,652.3,72468000,-1.2464,3.6797,-2.0665,
+1-octanol,second viral coefficients,104,326.25,1500,0.3366,-262.7646,-124460000,-1.76E+21,1.74E+22
+1-pentanol,vapour pressure,101,195.56,588.1,114.74801,-10643.3,-12.85754,1.25E-17,6
+1-pentanol,liquid density,105,195.56,588.1,0.81754,0.26732,588.1,0.25348,0
+1-pentanol,ideal gas isobaric heat capacity,107,298.15,1500,90600,306200,1605.4,211500,717.97
+1-pentanol,liquid isobaric heat capacity,100,200.14,389.15,201200,-651.3,2.275,0,0
+1-pentanol,heat of vaporization,106,195.56,588.1,73900000,-0.1464,1.4751,-0.9208,0
+1-pentanol,second viral coefficients,104,294.05,1500,0.262,-292.21,-27910000,2.71E+20,-1.75E+23
+1-propanol,ideal gas isobaric heat capacity,107,298.15,1500,61900,202130,1629.3,129560,727.4
+1-propanol,vapour pressure,101,146.95,536.8,84.66416,-8307.244,-8.57673,7.51E-18,6
+1-propanol,liquid density,105,146.95,536.8,1.2457,0.27281,536.8,0.23994,
+1-propanol,liquid isobaric heat capacity,100,146.95,400,158760,-635,1.969,0,
+1-propanol,heat of vaporization,106,146.95,536.8,68988000,0.6458,-0.5384,0.3317,
+1-propanol,second viral coefficients,104,295.19,1500,0.1515,-92.4732,-32170000,-3.06E+20,2.71E+21
+"2,7-dimethyloctane",vapour pressure,101,,,99.878,-8752.6,-11.422,6.39E-06,2
+"2,7-dimethyloctane",liquid density,105,219.15,604,0.46956,0.27,604,0.29916,0
+"2,7-dimethyloctane",ideal gas isobaric heat capacity,107,200,1500,138420,592420,1522.2,400210,664.94
+"2,7-dimethyloctane",heat of vaporization,106,219.15,604,61590000,0.38785,0,0,0
+"2,7-dimethyloctane",liquid isobaric heat capacity,100,220,620,1,1,1,1,1
+"2,7-dimethyloctane",second viral coefficients,104,200,1500,1,1,1,1,1
+2-butanol,vapour pressure,101,158.45,535.9,122.552,-10236.2,-14.125,2.36E-17,6
+2-butanol,liquid density,105,158.9,535.9,0.97552,0.26339,535.9,0.26864,0
+2-butanol,ideal gas isobaric heat capacity,107,298.15,1500,90878,255080,1893,185200,832.13
+2-butanol,liquid isobaric heat capacity,100,158.45,372.9,533390,-4986.2,18.908,-0.02,0
+2-butanol,heat of vaporization,106,158.45,535.9,75007000,0.09616,1.1444,-0.78448,0
+2-butanol,second viral coefficients,104,267.95,1500,0.21526,-216.5,19653000,1.24E+19,6.74E+33
+2-butanone,vapour pressure,101,186.48,535.5,72.698,-6143.6,-7.5779,5.65E-06,2
+2-butanone,liquid density,105,186.48,535.5,0.93767,0.25035,535.5,0.29964,
+2-butanone,ideal gas isobaric heat capacity,107,200,1500,78400,210320,1548.8,118550,693
+2-butanone,liquid isobaric heat capacity,100,186.48,373.15,132300,200.87,-0.9597,0.0019533,
+2-butanone,heat of vaporization,106,186.48,535.5,46220000,0.355,,,
+2-butanone,second viral coefficients,104,277.75,2677.5,0.0901,-86.7,-60500000,3.47E+20,-1.03E+23
+2-heptanol,vapour pressure,101,,,,,,,
+2-heptanol,liquid density,105,,,,,,,
+2-heptanol,liquid isobaric heat capacity,100,,,,,,,
+2-heptanol,ideal gas isobaric heat capacity,107,,,,,,,
+2-heptanol,heat of vaporization,106,,,,,,,
+2-heptanol,second viral coefficients,104,,,,,,,
+2-heptanone,vapour pressure,101,238.15,611.4,75.494,-7896.5,-7.5047,8.91E-18,6
+2-heptanone,liquid density,105,238.15,611.4,0.58247,0.25279,611.4,0.29818,0
+2-heptanone,ideal gas isobaric heat capacity,107,150,1200,125070,214800,691.2,161900,1759.3
+2-heptanone,liquid isobaric heat capacity,100,238.15,490,265040,-375.68,1.0024,0,0
+2-heptanone,heat of vaporization,106,238.15,611.4,61425000,0.39802,0,0,0
+2-heptanone,second viral coefficients,104,305.7,1500,0.29183,-341.09,78913000,4.00E+20,5.68E+22
+2-hexanone,vapour pressure,101,217.35,587.61,107.44,-8528.6,-12.679,8.46E-06,2
+2-hexanone,liquid density,105,217.35,587.61,0.67816,0.25634,587.61,0.28365,
+2-hexanone,ideal gas isobaric heat capacity,107,200,1200,109400,180700,689,147400,1772
+2-hexanone,liquid isobaric heat capacity,100,217.35,460,208250,-107.47,0.2062,0.00070293,
+2-hexanone,heat of vaporization,106,217.35,587.61,56231000,0.38207,,,
+2-hexanone,second viral coefficients,104,293.8,1500,0.24931,-287.04,-58288000,-2.87E+20,4.26E+22
+2-octanol,liquid density,105,241.55,629.8,0.52497,0.26186,629.8,0.25257,0
+2-octanol,vapour pressure,101,241.55,629.8,185.828,-14520.2,-23.6236,1.09E-05,2
+2-octanol,liquid isobaric heat capacity,100,241.55,452.9,1115100,-9773.8,34.252,-0.03454,0
+2-octanol,heat of vaporization,106,241.55,629.8,125810000,1.3269,-0.69134,-0.08027,0
+2-octanol,ideal gas isobaric heat capacity,107,298.15,1500,,,,,
+2-octanol,second viral coefficients,104,314.9,1500,,,,,
+2-pentanol,vapour pressure,101,200,561,116.828,-10453,-13.1768,1.07E-17,6
+2-pentanol,liquid density,105,200,561,0.81577,0.26594,561,0.25551,0
+2-pentanol,ideal gas isobaric heat capacity,107,298.15,1500,108530,307470,1867.2,222710,825.4
+2-pentanol,liquid isobaric heat capacity,100,200,392.2,883630,-8220.5,29.125,-0.02989,0
+2-pentanol,heat of vaporization,106,200,561,88703000,0.90566,-0.67627,0.3485,0
+2-pentanol,second viral coefficients,104,280.5,1500,0.23813,-246.91,-32755000,1.44E+20,-1.63E+23
+2-pentanone,vapour pressure,101,196.29,561.08,84.635,-7078.4,-9.3,6.27E-06,2
+2-pentanone,liquid density,105,196.29,561.08,0.90411,0.27207,561.08,0.30669,
+2-pentanone,ideal gas isobaric heat capacity,107,200,1500,90053,270850,1659.2,180120,743.96
+2-pentanone,liquid isobaric heat capacity,100,196.29,375.46,194590,-263.86,0.76808,,
+2-pentanone,heat of vaporization,106,196.29,561.08,51740000,0.39422,,,
+2-pentanone,second viral coefficients,104,280.54,1500,0.22325,-257.89,-35849000,-3.09E+20,5.92E+22
+2-propanol,vapour pressure,101,185.26,508.3,110.717,-9040,-12.676,5.54E-06,2
+2-propanol,liquid density,105,185.258,508.3,1.1799,0.2644,508.3,0.24653,
+2-propanol,ideal gas isobaric heat capacity,107,298.15,1500,73145,203130,1937.5,148150,843.37
+2-propanol,liquid isobaric heat capacity,100,185.258,463,471710,-4172.1,14.745,-0.014402,
+2-propanol,heat of vaporization,106,185.258,508.3,85020000,1.474,-1.878,0.933,
+2-propanol,second viral coefficients,104,254.15,1500,0.52914,-411.05,-3258000,1.44E+20,-8.86E+22
+3-heptanone,vapour pressure,101,234.15,606.6,78.463,-8077.2,-7.9062,8.05E-18,6
+3-heptanone,liquid density,105,234.15,606.6,0.59268,0.25663,606.6,0.27766,0
+3-heptanone,ideal gas isobaric heat capacity,107,200,1500,127680,338100,1383.1,188800,650.3
+3-heptanone,liquid isobaric heat capacity,100,234.15,480,270730,-399.89,1.0601,0,0
+3-heptanone,heat of vaporization,106,234.15,606.6,63357000,0.42167,0,0,0
+3-heptanone,second viral coefficients,104,303.3,1500,0.29056,-339.49,76495000,4.12E+20,6.10E+22
+3-hexanone,vapour pressure,101,217.5,582.82,73.155,-7242.9,-7.2569,1.27E-17,6
+3-hexanone,liquid density,105,217.5,582.82,0.67666,0.25578,582.82,0.27746,
+3-hexanone,ideal gas isobaric heat capacity,107,150,1500,112370,293600,1401,160100,650.5
+3-hexanone,liquid isobaric heat capacity,100,217.5,460,235960,-345.94,0.94278,,
+3-hexanone,heat of vaporization,106,217.5,582.82,56232000,0.39972,,,
+3-hexanone,second viral coefficients,104,297,1500,0.24188,-274.96,-58174000,-2.11E+20,-2.11E+22
+3-Octanol,vapour pressure,101,341.25,448.15,510.824,-31676.7,-70.4884,2.15E-16,6
+3-Octanol,liquid density,105,273.15,383.15,0.52383,0.25948,573.8,0.23615,0
+3-Octanol,heat of vaporization,106,341.25,448.15,65202.3,-38.5277,78.4937,-42.939,-2.0504
+3-Octanol,ideal gas isobaric heat capacity,107,298.15,1500,158030,323480,798.14,178820,2434.3
+3-Octanol,second viral coefficients,104,314.9,1500,0.41021,-486.57,-50341000,-2.35E+20,-4.74E+23
+3-Octanol,liquid isobaric heat capacity,100,216.9,298.5,583323,-4530.2,18.967,-0.02191,0
+3-pentanol,vapour pressure,101,204.15,559.6,95.581,-9225.8,-10.115,1.08E-18,6
+3-pentanol,liquid density,105,204.15,559.6,0.79814,0.26029,559.6,0.25949,0
+3-pentanol,ideal gas isobaric heat capacity,107,298.15,1500,108660,307440,1869.7,222900,826.53
+3-pentanol,liquid isobaric heat capacity,100,204.15,388.45,172140,-484.14,2.474,0,0
+3-pentanol,heat of vaporization,106,204.15,559.6,61959000,-0.16824,0.80891,-0.14713,0
+3-pentanol,second viral coefficients,104,279.8,1500,0.32054,-349.9,-10961000,1.28E+20,-9.39E+22
+3-pentanone,vapour pressure,101,234.18,560.95,44.286,-5415.1,-3.0913,1.86E-18,6
+3-pentanone,liquid density,105,234.18,560.95,0.71811,0.24129,560.95,0.27669,
+3-pentanone,ideal gas isobaric heat capacity,107,200,1500,96896,249070,1417.7,130100,646.7
+3-pentanone,liquid isobaric heat capacity,100,234.18,375.14,193020,-176.43,0.5669,,
+3-pentanone,heat of vaporization,106,234.18,560.95,52390000,0.40465,,,
+3-pentanone,second viral coefficients,104,280.47,1500,0.1968,-218.73,-45060000,-1.57E+20,1.97E+22
+4-heptanone,vapour pressure,101,240.65,602,100.52,-8525,-11.568,7.09E-06,2
+4-heptanone,liquid density,105,240.65,602,0.58029,0.25186,602,0.29502,0
+4-heptanone,ideal gas isobaric heat capacity,107,200,1500,127820,338200,1388.1,189900,652.8
+4-heptanone,liquid isobaric heat capacity,100,240,480,277620,-435.25,1.1298,0,0
+4-heptanone,heat of vaporization,106,240.65,602,58225000,0.37375,0,0,0
+4-heptanone,second viral coefficients,104,301,1500,0.28953,-335.24,73687000,3.35E+20,4.60E+22
+4-octanol,ideal gas isobaric heat capacity,107,,,158030,323480,798.14,178820,2434.3
+4-octanol,second viral coefficients,104,,,,,,,
+4-octanol,vapour pressure,101,343.15,449.75,376.37,-24955.2,-50.8272,1.37E-16,6
+4-octanol,liquid density,105,273.15,373.15,0.47742,0.24879,574.7,0.22197,0
+4-octanol,heat of vaporization,106,343.15,449.75,3320830,-34420,126.76,-0.14856,0
+4-octanol,liquid isobaric heat capacity,100,216.9,310.7,,,,,
+"9,10-dehydrophenanthrene",vapour pressure,101,298,800,1,1,1,1,1
+"9,10-dehydrophenanthrene",liquid density,105,298,800,1,1,1,1,1
+"9,10-dehydrophenanthrene",ideal gas isobaric heat capacity,107,298,800,1,1,1,1,1
+"9,10-dehydrophenanthrene",liquid isobaric heat capacity,100,298,800,1,1,1,1,1
+"9,10-dehydrophenanthrene",heat of vaporization,106,298,800,1,1,1,1,1
+"9,10-dehydrophenanthrene",second viral coefficients,104,298,800,1,1,1,1,1
+acetic acid,vapour pressure,101,289.81,591.95,53.27,-6304.5,-4.2985,8.89E-18,6
+acetic acid,liquid density,105,289.81,591.95,1.4486,0.25892,591.95,0.2529,0
+acetic acid,ideal gas isobaric heat capacity,107,50,1500,40200,136750,1262,70030,569.7
+acetic acid,liquid isobaric heat capacity,100,289.81,391.05,139640,-320.8,0.8985,0,0
+acetic acid,heat of vaporization,106,289.81,591.95,40179000,2.6037,-5.0031,2.7069,0
+acetic acid,second viral coefficients,104,1,1,1,1,1,1,1
+acetone,vapour pressure,101,178.45,508.2,69.006,-5599.6,-7.0985,6.23E-06,2
+acetone,liquid density,105,178.45,508.2,1.2332,0.25886,508.2,0.2913,
+acetone,ideal gas isobaric heat capacity,107,200,1500,57040,163200,1607,96800,731.5
+acetone,liquid isobaric heat capacity,100,178.45,329.44,135600,-177,0.2837,0.000689,
+acetone,heat of vaporization,106,178.45,508.2,42150000,0.3397,,,
+acetone,second viral coefficients,104,254.1,2540.5,0.1107,-99.2,-30540000,9.89E+18,-1.65E+22
+acetonitrile,vapour pressure,101,229.32,545.5,58.302,-5385.6,-5.4954,5.36E-06,2
+acetonitrile,liquid density,105,229.32,545.5,1.3064,0.22597,545.5,0.28678,0
+acetonitrile,ideal gas isobaric heat capacity,107,100,1500,41914,88760,1581.8,50320,699.8
+acetonitrile,liquid isobaric heat capacity,100,229.32,354.75,97582,-122.2,0.34085,0,0
+acetonitrile,heat of vaporization,106,229.32,545.5,43511000,0.34765,0,0,0
+acetonitrile,second viral coefficients,104,301.4,1500,0.05538,-111.41,-59031000,8.21E+19,1.11E+23
+argon,vapour pressure,101,83.78,150.86,42.127,-1093.1,-4.1425,5.73E-05,2
+argon,liquid density,105,83.78,150.86,3.8469,0.2881,150.86,0.29783,0
+argon,liquid isobaric heat capacity,100,83.78,135,134390,-1989.4,11.043,0,0
+argon,heat of vaporization,106,83.78,150.86,8730800,0.3526,0,0,0
+argon,second viral coefficients,104,50,1500,0.034663,-14.191,-90971,1.3865E+14,-6.42E+15
+argon,ideal gas isobaric heat capacity,100,100,1500,20786,0,0,0,0
+benzene,vapour pressure,101,278.68,562.05,83.107,-6486.2,-9.2194,6.98E-06,2
+benzene,liquid density,105,278.68,562.05,1.0259,0.26666,562.05,0.28394,
+benzene,ideal gas isobaric heat capacity,107,298.15,1500,55238,173380,764.25,72545,2445.7
+benzene,liquid isobaric heat capacity,100,278.68,353.24,129440,-169.5,0.64781,0,0
+benzene,heat of vaporization,106,278.68,562.05,45346000,0.39053,0,0,0
+benzene,second viral coefficients,104,281.02,1500,0.15059,-186.94,-23146000,-7.05E+18,-6.88E+20
+butanal,vapour pressure,101,176.75,537.2,99.33,-7083.6,-11.733,1.00E-05,2
+butanal,liquid density,105,176.75,537.2,1.0361,0.26731,537.2,0.28397,0
+butanal,ideal gas isobaric heat capacity,107,200,1500,89657,237310,1975.4,158660,904.13
+butanal,liquid isobaric heat capacity,100,176.75,300,65682,1329.1,-7.1579,0.012755,0
+butanal,heat of vaporization,106,176.75,537.2,46400000,0.3849,0,0,0
+butanal,second viral coefficients,104,268.6,1500,0.16958,-192.4,27885000,1.37E+20,2.17E+22
+butyl acetate,vapour pressure,101,199.65,575.4,122.82,-9253.2,-14.99,1.05E-05,2
+butyl acetate,liquid density,105,199.65,575.4,0.67794,0.2637,575.4,0.29318,0
+butyl acetate,ideal gas isobaric heat capacity,107,298.15,1200,116840,376900,1956,281800,811.2
+butyl acetate,liquid isobaric heat capacity,100,298.15,399.26,111850,384.52,0,0,0
+butyl acetate,heat of vaporization,106,199.65,575.4,58276000,0.38854,0,0,0
+butyl acetate,second viral coefficients,104,289.5,1500,0.2303,-269.3,-64410000,-2.34E+20,3.13E+22
+butyl ethyl ether,liquid density,105,170.15,531,0.71599,0.27351,531,0.28605,0
+butyl ethyl ether,ideal gas isobaric heat capacity,107,298.15,1500,127400,344000,1718,229500,800
+butyl ethyl ether,liquid isobaric heat capacity,100,265.5,398.25,165990,-135.48,1.0865,0,0
+butyl ethyl ether,heat of vaporization,106,170.15,531,145270000,4.842,-7.8194,3.9023,0
+butyl ethyl ether,second viral coefficients,104,265.5,1500,0.25113,-263.33,-40243000,-3.67E+19,1.90E+20
+butyl ethyl ether,vapour pressure,101,170.15,531,109.44,-7321,-14.093,0.014475,1
+butyl formate,vapour pressure,101,181.25,559,115.54,-7907,-14.945,0.014711,1
+butyl formate,liquid density,105,181.25,559,0.79185,0.26606,559,0.2785,0
+butyl formate,liquid isobaric heat capacity,100,290.15,379.25,102100,327.95,0,0,0
+butyl formate,heat of vaporization,106,181.25,559,55800000,0.413,0,0,0
+butyl formate,second viral coefficients,104,279.5,1500,0.207,-232,-40100000,1.73E+20,2.92E+22
+butyl formate,ideal gas isobaric heat capacity,107,298.15,1500,105960,294800,1899,225400,822.19
+butyl propionate,liquid density,105,183.63,594.6,0.5981,0.26518,594.6,0.28571,0
+butyl propionate,vapour pressure,101,183.63,594.6,71.228,-7709.8,-6.8418,3.66E-18,6
+butyl propionate,ideal gas isobaric heat capacity,107,300,1200.15,87800,232500,518.5,231000,1627
+butyl propionate,liquid isobaric heat capacity,100,183.63,418.26,308020,-641.97,1.5477,0,0
+butyl propionate,heat of vaporization,106,183.63,594.6,65850000,0.75583,-0.78827,0.46705,0
+butyl propionate,second viral coefficients,104,297.3,1500,0.30206,-332.93,-76322000,-2.46E+20,2.72E+22
+butyronitrile,vapour pressure,101,161.25,582.25,66.32,-6714.9,-6.3087,1.35E-17,6
+butyronitrile,liquid density,105,161.25,585.25,0.87533,0.24331,582.25,0.28586,0
+butyronitrile,ideal gas isobaric heat capacity,107,200,1500,69060,199960,1549.4,131460,675
+butyronitrile,liquid isobaric heat capacity,100,161.25,390.75,104000,174,1,0,0
+butyronitrile,heat of vaporization,106,161.25,585.25,52200000,0.165,0.6692,-0.539,0
+butyronitrile,second viral coefficients,104,291,2901,0.38125,-731.14,23635000,-2.39E+21,4.26E+23
+carbon monoxide,second viral coefficients,104,66,130,1,1,1,1,1
+carbon monoxide,heat of vaporization,106,66,130,8585000,0.4921,-0.326,0.2231,0
+carbon monoxide,liquid isobaric heat capacity,100,66,130,1,1,1,1,1
+carbon monoxide,vapour pressure,101,66,132,45.698,-1076.6,-4.8814,7.57E-05,2
+carbon monoxide,liquid density,105,66,133,2.987,0.27532,132.92,0.2813,0
+carbon monoxide,ideal gas isobaric heat capacity,107,60,1500,29108,8773,3085.1,8455.3,1538.2
+chloroform,vapour pressure,101,207.15,536.4,146.43,-7792.3,-20.614,0.024578,1
+chloroform,liquid density,105,209.63,536.4,1.0841,0.2581,536.4,0.2741,0
+chloroform,ideal gas isobaric heat capacity,107,100,1500,39420,65730,928,49300,399.6
+chloroform,liquid isobaric heat capacity,100,233.15,366.48,124850,-166.34,0.43209,0,0
+chloroform,heat of vaporization,106,209.63,536.4,41860000,0.3584,0,0,0
+chloroform,second viral coefficients,104,268.2,2682,0.164,-213.6,-12300000,-3.56E+19,7.19E+21
+cis-decalin,vapour pressure,101,230.2,703.6,107.53,-9600.2,-12.502,6.19E-06,2
+cis-decalin,liquid density,105,230.2,703.6,0.5533,0.26543,703.6,0.2876,0
+cis-decalin,ideal gas isobaric heat capacity,107,200,1500,105800,559320,1646.4,404310,774.5
+cis-decalin,liquid isobaric heat capacity,100,230,750,1,1,1,1,1
+cis-decalin,heat of vaporization,106,230.2,703.6,64011000,0.43108,0,0,0
+cis-decalin,second viral coefficients,104,230,750,1,1,1,1,1
+cyclohexane,vapour pressure,101,279.69,553.8,51.087,-5226.4,-4.2278,9.76E-18,6
+cyclohexane,liquid density,105,279.69,553.8,0.88998,0.27376,553.8,0.28571,0
+cyclohexane,ideal gas isobaric heat capacity,107,100,1500,43200,373500,1192,163500,530.1
+cyclohexane,liquid isobaric heat capacity,100,279.69,400,-220600,3118.3,-9.4216,0.010687,0
+cyclohexane,heat of vaporization,106,279.69,553.8,44902000,0.39881,0,0,0
+cyclohexane,second viral coefficients,104,276.7,2767,0.1814,-187.8,-27480000,-5.48E+19,1.04E+22
+cyclohexanone,vapour pressure,101,242,653,85.424,-7944.4,-9.2862,5.00E-06,2
+cyclohexanone,liquid density,105,242,653,0.86464,0.26888,653,0.29943,0
+cyclohexanone,ideal gas isobaric heat capacity,107,298.15,1500,85860,257770,848.95,77780,2401.5
+cyclohexanone,liquid isobaric heat capacity,100,290,489.75,6110.4,600.94,0,0,0
+cyclohexanone,heat of vaporization,106,242,653,56772000,0.37431,0,0,0
+cyclohexanone,second viral coefficients,104,326.5,1500,0.22277,-302.8,-67082000,-6.43E+20,1.11E+23
+cyclopentanone,vapour pressure,101,221.85,624.5,56.405,-6444.5,-4.8222,4.88E-18,6
+cyclopentanone,liquid density,105,221.85,624.5,1.0649,0.27474,624.5,0.30013,0
+cyclopentanone,ideal gas isobaric heat capacity,107,298.15,1500,69816,195020,807.79,92789,2435.5
+cyclopentanone,liquid isobaric heat capacity,100,221.85,403.8,41800,362.34,0,0,0
+cyclopentanone,heat of vaporization,106,221.85,624.5,53751000,0.37486,0,0,0
+cyclopentanone,second viral coefficients,104,312.25,1500,0.1836,-239.74,-49718000,-5.08E+20,9.13E+22
+deuterium oxide,vapour pressure,101,257.74,643.89,78.433,-7601.2,-7.9714,4.38E-06,2
+deuterium oxide,liquid density,105,398.15,643.89,4.5825,0.25807,643.89,0.23797,0
+deuterium oxide,ideal gas isobaric heat capacity,107,100,6000,33633,27839,2497,15953,1143.5
+deuterium oxide,liquid isobaric heat capacity,100,276.93,473.15,14892,672.69,-2.1188,0.0021585,0
+deuterium oxide,heat of vaporization,106,276.97,643.89,65178000,0.97655,1.1126,0.5616,0
+deuterium oxide,second viral coefficients,104,322,1610,-0.0173,19.82,-27190000,3.68E+20,-1.53E+23
+dibenzyltoluene,vapour pressure,101,273,633,1,1,1,1,1
+dibenzyltoluene,liquid density,105,273,633,1,1,1,1,1
+dibenzyltoluene,ideal gas isobaric heat capacity,107,273,633,1,1,1,1,1
+dibenzyltoluene,liquid isobaric heat capacity,100,273,633,1,1,1,1,1
+dibenzyltoluene,heat of vaporization,106,273,633,1,1,1,1,1
+dibenzyltoluene,second viral coefficients,104,273,633,1,1,1,1,1
+dibutyl ether,vapour pressure,101,175.3,584.1,72.227,-7537.6,-7.0596,9.14E-18,6
+dibutyl ether,liquid density,105,175.3,584.1,0.55941,0.27243,584.1,0.29932,0
+dibutyl ether,ideal gas isobaric heat capacity,107,200,1500,161220,447770,1683.1,291800,781.6
+dibutyl ether,liquid isobaric heat capacity,100,175.3,450,270720,-259.83,0.95427,0,0
+dibutyl ether,heat of vaporization,106,175.3,584.1,59616000,0.38833,0,0,0
+dibutyl ether,second viral coefficients,104,292.05,1500,0.33911,-373.44,77353000,1.31E+20,4.42E+21
+diethyl ether,vapour pressure,101,156.85,466.7,136.9,-6954.3,-19.254,0.024508,1
+diethyl ether,liquid density,105,156.85,466.7,0.9554,0.26847,466.7,0.2814,0
+diethyl ether,ideal gas isobaric heat capacity,107,298.15,1500,99953,170380,870.72,107460,2471.3
+diethyl ether,liquid isobaric heat capacity,100,156.92,460,44400,1301,-5.5,0.008763,0
+diethyl ether,heat of vaporization,106,156.85,466.7,40600000,0.3868,0,0,0
+diethyl ether,second viral coefficients,104,233.35,1500,0.1633,-136.8,-20080000,-1.75E+19,2.66E+21
+diisopropyl ether,vapour pressure,101,187.65,500.05,41.631,-4668.7,-2.8551,0.00063693,1
+diisopropyl ether,liquid density,105,187.65,500.05,0.69213,0.26974,500.05,0.28571,0
+diisopropyl ether,ideal gas isobaric heat capacity,107,298.15,1500,109300,368300,1605.7,234200,699
+diisopropyl ether,liquid isobaric heat capacity,100,187.45,341.45,163000,-4.5,0.62,0,0
+diisopropyl ether,heat of vaporization,106,187.65,500.05,46117000,0.4,0,0,0
+diisopropyl ether,second viral coefficients,104,250,1500,0.211,-204.4,-39600000,3.19E+19,-1.08E+22
+di-n-propyl ether,vapour pressure,101,149.95,530.6,65.935,-6198.5,-6.3423,2.09E-17,6
+di-n-propyl ether,liquid density,105,149.95,530.6,0.7239,0.27653,530.6,0.2794,0
+di-n-propyl ether,ideal gas isobaric heat capacity,107,200,1500,120300,341230,1545.5,204800,723.2
+di-n-propyl ether,liquid isobaric heat capacity,100,149.95,363.23,193740,-124.7,0.735,0,0
+di-n-propyl ether,heat of vaporization,106,149.95,530.6,49447000,0.33923,0.21994,-0.2108,0
+di-n-propyl ether,second viral coefficients,104,265.5,1500,0.2462,-260.16,-39596000,1.07E+19,-1.10E+22
+diphenylmethane,vapour pressure,101,298.39,760,124.1,-12250,-14.546,5.75E-06,2
+diphenylmethane,liquid density,105,298.39,760,0.44189,0.24877,760,0.28024,0
+diphenylmethane,ideal gas isobaric heat capacity,107,298.15,1500,113530,467890,1530.4,351640,709.35
+diphenylmethane,liquid isobaric heat capacity,100,200,400,1,1,1,1,1
+diphenylmethane,heat of vaporization,106,242.67,772,81784000,0.41679,0,0,0
+diphenylmethane,second viral coefficients,104,200,500,1,1,1,1,1
+dummy,,105,,,,,,,
+,,,,,,,,,
+,,,,,,,,,
+,,,,,,,,,
+,,,,,,,,,
+,,,,,,,,,
+ethane,vapour pressure,101,90.35,305.32,51.857,-2598.7,-5.1283,1.49E-05,2
+ethane,liquid density,105,90.35,305.32,1.9122,0.27937,305.32,0.29187,
+ethane,ideal gas isobaric heat capacity,107,298.15,1500,44256,84737,872.24,67130,2430.4
+ethane,heat of vaporization,106,90.35,305.32,21091000,0.60646,-0.55492,0.32799,
+ethane,second viral coefficients,104,152.71,1500,0.08095,-61.71,-1435000,6.76E+16,-9.74E+18
+ethane,liquid isobaric heat capacity,114,92,290,44.009,89718,918.77,-1886,
+ethanol,vapour pressure,101,159.05,514,73.304,-7122.3,-7.1424,2.89E-06,2
+ethanol,liquid density,105,159.05,514,1.6288,0.27469,514,0.23178,
+ethanol,ideal gas isobaric heat capacity,107,200,1500,49200,145770,1662.8,93900,744.7
+ethanol,liquid isobaric heat capacity,100,159.05,390,102640,-139.63,-0.030341,0.0020386,
+ethanol,heat of vaporization,106,159.05,514,55789000,0.31245,,,
+ethanol,second viral coefficients,104,309.72,2581,0.044,-55.7,-12900000,-6.49E+19,-2.58E+22
+ethene,vapour pressure,101,104,282.34,53.963,-2443,-5.5643,1.91E-05,2
+ethene,liquid density,105,104,282.34,2.0961,0.27657,282.34,0.29147,
+ethene,ideal gas isobaric heat capacity,107,60,1500,33380,94790,1596,55100,740.8
+ethene,liquid isobaric heat capacity,100,104,252.7,247390,-4428,40.936,-0.1697,0.00026816
+ethene,heat of vaporization,106,104,282.34,18844000,0.36485,,,
+ethene,second viral coefficients,104,130,1500,0.093084,-61.665,-643710,-1.37E+17,1.56E+19
+ethyl acetate,vapour pressure,101,189.6,523.3,66.824,-6227.6,-6.41,1.79E-17,6
+ethyl acetate,liquid density,105,189.6,523.3,0.8996,0.25856,523.3,0.278,0
+ethyl acetate,ideal gas isobaric heat capacity,107,200,1500,99810,209310,2022.6,180300,928.05
+ethyl acetate,liquid isobaric heat capacity,100,189.6,350.21,226230,-624.8,1.472,0,0
+ethyl acetate,heat of vaporization,106,189.6,523.3,49330000,0.3847,0,0,0
+ethyl acetate,second viral coefficients,104,261.6,1500,0.16016,-180.3,31882000,4.84E+19,4.11E+21
+ethyl butanoate,vapour pressure,101,175.15,571,57.661,-6346.5,-5.032,8.25E-18,6
+ethyl butanoate,liquid density,105,175.15,571,0.63566,0.25613,571,0.27829,0
+ethyl butanoate,ideal gas isobaric heat capacity,107,298,1200,111500,339100,1670.5,251800,733.6
+ethyl butanoate,liquid isobaric heat capacity,100,285.5,428.25,82434,422.45,0.20992,0,0
+ethyl butanoate,heat of vaporization,106,175.15,571,57624000,0.46881,-0.14511,0.061942,0
+ethyl butanoate,second viral coefficients,104,285.5,1500,0.27301,-303.27,-57015000,-1.52E+20,1.64E+22
+ethyl formate,vapour pressure,101,193.55,508.4,73.833,-5817,-7.809,6.32E-06,2
+ethyl formate,liquid density,105,193.55,508.4,1.1343,0.26168,508.4,0.2791,0
+ethyl formate,ideal gas isobaric heat capacity,107,100,1500,53700,188600,1207,86400,496
+ethyl formate,liquid isobaric heat capacity,100,254.2,374.2,80000,223.6,0,0,0
+ethyl formate,heat of vaporization,106,193.55,508.4,45909000,0.4123,0,0,0
+ethyl formate,second viral coefficients,104,254.2,1500,0.12795,-135.82,-21327000,-2.11E+19,9.98E+20
+ethyl propionate,liquid density,105,199.25,546,0.7405,0.25563,546,0.2795,0
+ethyl propionate,vapour pressure,101,199.25,546,105.64,-8007,-12.477,9.00E-06,2
+ethyl propionate,ideal gas isobaric heat capacity,107,300,1200,93700,282900,1648,215500,724.7
+ethyl propionate,liquid isobaric heat capacity,100,298.15,410,76330,400.1,0,0,0
+ethyl propionate,heat of vaporization,106,199.25,546,50330000,-0.023028,0.84791,-0.44199,0
+ethyl propionate,second viral coefficients,104,273,1500,0.159,-186.5,-50820000,-3.88E+19,1.10E+20
+ethyl tert-butyl ether,liquid density,105,179.2,509.4,0.663329,0.261351,509.4,0.285714,0
+ethyl tert-butyl ether,ideal gas isobaric heat capacity,107,298,1500,111992,369199,1690.62,260941,744.913
+ethyl tert-butyl ether,liquid isobaric heat capacity,100,179.2,345.6,110960,314.22,0.1748,0,0
+ethyl tert-butyl ether,heat of vaporization,106,179.2,509.4,45290300,0.273426,0.216451,-0.117557,0
+ethyl tert-butyl ether,second viral coefficients,104,254.7,1500,0.24243,-256.264,-31870400,-2.93E+19,1.21E+21
+ethyl tert-butyl ether,vapour pressure,101,179.2,509.4,64.1884,-5820.23,-6.13429,2.14E-17,6
+ethylamine,vapour pressure,101,192.15,456.15,81.56,-5596.9,-9.0779,8.79E-06,2
+ethylamine,liquid density,105,192.15,456.15,1.0936,0.22636,456.15,0.25522,0
+ethylamine,ideal gas isobaric heat capacity,107,200,1500,59400,161800,1812,107800,820
+ethylamine,liquid isobaric heat capacity,100,192.15,289.73,121700,38.93,0,0,0
+ethylamine,heat of vaporization,106,192.15,456.15,42750000,0.5857,-0.332,0.169,0
+ethylamine,second viral coefficients,104,228,1500,0.097,-107.2,-12380000,-3.18E-18,-1.61E+20
+ethylenediamine,vapour pressure,101,284.29,593,73.51,-7572.7,-7.1435,1.21E-17,6
+ethylenediamine,liquid density,105,284.29,593,0.7842,0.20702,593,0.20254,0
+ethylenediamine,ideal gas isobaric heat capacity,107,300,1500,72860,184360,1688,119900,767.3
+ethylenediamine,liquid isobaric heat capacity,100,284.29,390.41,184440,-150.2,0.37044,0,0
+ethylenediamine,heat of vaporization,106,284.29,593,57521000,0.34513,0,0,0
+ethylenediamine,second viral coefficients,104,296.5,1500,0.12264,-177.12,-39519000,-2.06E+20,3.24E+22
+formic acid,vapour pressure,101,281.45,588,43.8066,-5131.03,-3.18777,2.38E-06,2
+formic acid,liquid density,105,281.45,588,1.938,0.24225,588,0.24435,0
+formic acid,ideal gas isobaric heat capacity,107,50,1500,33810,75930,1192.5,31800,550
+formic acid,liquid isobaric heat capacity,100,281.45,380,78060,71.54,0,0,0
+formic acid,heat of vaporization,106,250,588,23195000,1.9091,-5.0003,3.2641,0
+formic acid,second viral coefficients,104,1,1,1,1,1,1,1
+hexanal,vapour pressure,101,217.15,591,81.507,-7776.8,-8.4516,1.51E-17,6
+hexanal,liquid density,105,217.15,591,0.71899,0.26531,591,0.27628,0
+hexanal,ideal gas isobaric heat capacity,107,200,1500,123200,221460,840,121900,2205
+hexanal,liquid isobaric heat capacity,100,217.15,401.45,117700,329.52,0,0,0
+hexanal,heat of vaporization,106,217.15,591,56661000,0.38533,0,0,0
+hexanal,second viral coefficients,104,295.5,1500,0.23818,-275.23,-56915000,-2.88E+20,4.29E+22
+hydrogen,liquid density,105,13,33,5.414,0.34893,33.19,0.2706,0
+hydrogen,liquid isobaric heat capacity,100,13,33,1,1,1,1,1
+hydrogen,second viral coefficients,104,13,33,1,1,1,1,1
+hydrogen,ideal gas isobaric heat capacity,100,13,33,64979,-788.17,5.8287,-0.018459,2.16E-05
+hydrogen,heat of vaporization,106,13,39,1012700,0.698,-1.817,1.447,0
+hydrogen,vapour pressure,101,13,38.487,12.69,-94.896,1.1125,0.00032915,2
+isooctane,second viral coefficients,104,,,0.26838,-323.88,46899000,-5.95E+19,8.81E+21
+isooctane,vapour pressure,101,165.78,543.8,84.912,-6722.2,-9.5157,7.22E-06,2
+isooctane,liquid density,105,165.78,543.8,0.59059,0.27424,543.8,0.2847,0
+isooctane,ideal gas isobaric heat capacity,107,200,1500,113900,528600,1594,335100,677.94
+isooctane,liquid isobaric heat capacity,100,165.78,520,95275,696.7,-1.3765,0.0021734,0
+isooctane,heat of vaporization,106,165.78,543.8,47710000,0.37949,0,0,0
+methane,vapour pressure,101,90.69,190.56,39.205,-1324.4,-3.4366,3.10E-05,2
+methane,liquid density,105,90.69,190.56,2.9124,0.28976,190.56,0.28881,0
+methane,ideal gas isobaric heat capacity,107,50,1500,33298,79933,2086.9,41602,991.96
+methane,liquid isobaric heat capacity,100,90.69,190,65.708,38883,-257.95,614.07,0
+methane,heat of vaporization,106,90.69,190.56,10194000,0.26087,-0.14694,0.22154,0
+methane,second viral coefficients,104,110.83,1500,0.051075,-25.181,-256010,5.98E+15,-5.77E+17
+methanol,vapour pressure,101,175.47,512.5,82.718,-6904.5,-8.8622,7.47E-06,2
+methanol,liquid density,105,175.47,512.5,2.3267,0.27073,512.5,0.24713,
+methanol,ideal gas isobaric heat capacity,107,200,1500,39252,87900,1916.5,53654,896.7
+methanol,liquid isobaric heat capacity,100,175.47,503.15,256040,-2741.4,14.777,-0.035078,3.27E-05
+methanol,heat of vaporization,106,175.47,512.5,50451000,0.33594,,,
+methanol,second viral coefficients,104,298.15,1500,0.013,-14.4,-20600000,7.60E+19,-4.62E+22
+methyl acetate,vapour pressure,101,175.15,506.55,61.267,-5618.6,-5.6473,2.11E-17,6
+methyl acetate,liquid density,105,175.15,506.55,1.13,0.2593,506.55,0.2764,0
+methyl acetate,ideal gas isobaric heat capacity,107,298,1500,55500,178200,1260,85300,562
+methyl acetate,liquid isobaric heat capacity,100,253.4,373.4,61260,270.9,0,0,0
+methyl acetate,heat of vaporization,106,175.15,506.55,44920000,0.3685,0,0,0
+methyl acetate,second viral coefficients,104,253.4,1500,0.12941,-157.15,24414000,2.35E+19,8.02E+20
+methyl butanoate,liquid density,105,187.35,554.5,0.76983,0.26173,554.5,0.26879,0
+methyl butanoate,vapour pressure,101,187.35,554.5,71.87,-6885.7,-7.0944,1.49E-17,6
+methyl butanoate,ideal gas isobaric heat capacity,107,298,1200,89400,291000,1570,207300,678.3
+methyl butanoate,liquid isobaric heat capacity,100,277.25,415.87,102930,129.1,0.62516,0,0
+methyl butanoate,heat of vaporization,106,187.35,554.5,51299000,0.10033,0.64085,-0.38359,0
+methyl butanoate,second viral coefficients,104,227.25,1500,0.22433,-246.22,-41876000,-1.01E+20,1.11E+22
+methyl decanoate,vapour pressure,101,1,1,1,1,1,1,1
+methyl decanoate,liquid density,105,1,1,1,1,1,1,1
+methyl decanoate,ideal gas isobaric heat capacity,107,1,1,1,1,1,1,1
+methyl decanoate,liquid isobaric heat capacity,100,1,1,1,1,1,1,1
+methyl decanoate,heat of vaporization,106,1,1,1,1,1,1,1
+methyl decanoate,second viral coefficients,104,1,1,1,1,1,1,1
+methyl docosanoate,vapour pressure,101,1,1,1,1,1,1,1
+methyl docosanoate,liquid density,105,1,1,1,1,1,1,1
+methyl docosanoate,ideal gas isobaric heat capacity,107,1,1,1,1,1,1,1
+methyl docosanoate,liquid isobaric heat capacity,100,1,1,1,1,1,1,1
+methyl docosanoate,heat of vaporization,106,1,1,1,1,1,1,1
+methyl docosanoate,second viral coefficients,104,1,1,1,1,1,1,1
+methyl formate,vapour pressure,101,174.15,487.2,77.184,-5606.1,-8.392,7.85E-06,2
+methyl formate,liquid density,105,174.15,487.2,1.525,0.2634,487.2,0.2806,0
+methyl formate,ideal gas isobaric heat capacity,107,250,1500,50600,121900,1637,89400,743
+methyl formate,liquid isobaric heat capacity,100,174.15,304.9,130200,-396,1.21,0,0
+methyl formate,heat of vaporization,106,174.15,487.2,41030000,0.3825,0,0,0
+methyl formate,second viral coefficients,104,243.6,1500,0.09516,-102.83,-16093000,-8.04E+18,-9.40E+20
+methyl hexadecanoate,vapour pressure,101,1,1,1,1,1,1,1
+methyl hexadecanoate,liquid density,105,1,1,1,1,1,1,1
+methyl hexadecanoate,ideal gas isobaric heat capacity,107,1,1,1,1,1,1,1
+methyl hexadecanoate,liquid isobaric heat capacity,100,1,1,1,1,1,1,1
+methyl hexadecanoate,heat of vaporization,106,1,1,1,1,1,1,1
+methyl hexadecanoate,second viral coefficients,104,1,1,1,1,1,1,1
+methyl isobutyl ketone,vapour pressure,101,189.15,574.6,80.503,-7421.8,-8.379,1.81E-17,6
+methyl isobutyl ketone,liquid density,105,189.15,574.6,0.71687,0.26453,574.6,0.28918,0
+methyl isobutyl ketone,ideal gas isobaric heat capacity,107,298.15,1500.15,122700,219500,842,119100,2460
+methyl isobutyl ketone,liquid isobaric heat capacity,100,189.15,389.15,183650,-79.862,0.60769,0,0
+methyl isobutyl ketone,heat of vaporization,106,189.15,574.6,54687000,0.40583,0,0,0
+methyl isobutyl ketone,second viral coefficients,104,287.3,1500,0.24408,-280.81,-51669000,-2.35E+20,3.48E+22
+methyl isopropyl ketone,vapour pressure,101,180.15,553.4,45.242,-5324.4,-3.2551,3.04E-18,6
+methyl isopropyl ketone,liquid density,105,180.15,553.4,0.86567,0.26836,553.4,0.28364,0
+methyl isopropyl ketone,ideal gas isobaric heat capacity,107,300,1500,159140,176400,1207.6,40740000,10.503
+methyl isopropyl ketone,liquid isobaric heat capacity,100,180.15,440,191170,-331.04,0.98445,0,0
+methyl isopropyl ketone,heat of vaporization,106,180.15,553.4,47075000,0.33601,0,0,0
+methyl isopropyl ketone,second viral coefficients,104,276.7,2766.5,0.16,-130.1,-49100000,6.10E+17,-2.93E+22
+methyl pentanoate,vapour pressure,101,364.75,417.18,54.12645394,-6396.082365,-4.443881229,4.51E-14,-139.5760453
+methyl pentanoate,ideal gas isobaric heat capacity,107,200,1000,84550.16496,344904.1679,1200.531144,182916.5428,530.4917897
+methyl pentanoate,heat of vaporization,106,182.49,580.79,49324043.88,-0.198932529,0.937552087,-0.365893903,0
+methyl pentanoate,liquid isobaric heat capacity,100,182.49,577.14,24097.97761,1325.615172,-3.061439533,0.003009087,0
+methyl pentanoate,liquid density,105,190,580,0.725599268,0.272719425,588,0.3,0
+methyl pentanoate,second viral coefficients,104,250,1500,0.174401248,-186.3854721,-43027122.45,-5.89E+19,9.66E+21
+methyl propionate,vapour pressure,101,185.65,530.6,70.717,-6439.7,-6.9845,2.01E-17,6
+methyl propionate,liquid density,105,185.65,530.6,0.9147,0.2594,530.6,0.2774,0
+methyl propionate,ideal gas isobaric heat capacity,107,300,1200,77650,244200,1714,181800,716
+methyl propionate,liquid isobaric heat capacity,100,300,390,71140,335.5,0,0,0
+methyl propionate,heat of vaporization,106,185.65,530.6,50080000,0.3959,0,0,0
+methyl propionate,second viral coefficients,104,265.3,5100,0.15744,-192.69,-33737000,-4.06E+19,3.25E+21
+methylamine,vapour pressure,101,179.69,430.05,75.206,-5082.8,-8.0919,8.11E-06,2
+methylamine,liquid density,105,179.69,430.05,1.39,0.21405,430.05,0.2275,0
+methylamine,ideal gas isobaric heat capacity,107,150,1500,0.00041,105780,1708,68360,735
+methylamine,liquid isobaric heat capacity,100,179.69,266.82,92520,37.45,0,0,0
+methylamine,heat of vaporization,106,179.69,430.05,38580000,0.404,0,0,0
+methylamine,second viral coefficients,104,215,1505,0.0668,-65.8,-8503000,-9.37E+17,-4.61E+20
+monoethanolamine,vapour pressure,101,283.65,678.2,92.624,-10367,-9.4699,1.90E-18,6
+monoethanolamine,liquid density,105,283.65,678.2,1.0011,0.22523,678.2,0.21515,0
+monoethanolamine,ideal gas isobaric heat capacity,107,298.15,1500,72140,181500,2030,131400,860
+monoethanolamine,liquid isobaric heat capacity,100,298.15,443.15,114000,158.6,0,0,0
+monoethanolamine,heat of vaporization,106,283.65,678.2,85465000,0.5102,0,0,0
+monoethanolamine,second viral coefficients,104,339.1,1500,0.13635,-174.62,48234000,1.64E+20,4.38E+21
+m-xylene,liquid isobaric heat capacity,100,,,1,1,1,1,1
+m-xylene,ideal gas isobaric heat capacity,107,200,1500,75680,339240,1496,224700,675.9
+m-xylene,liquid density,105,225.3,617,0.68902,0.26086,617,0.27479,0
+m-xylene,vapour pressure,101,225.3,617,85.099,-7615.9,-9.3072,5.56E-06,2
+m-xylene,heat of vaporization,106,225.3,617,54626000,0.37289,0,0,0
+m-xylene,second viral coefficients,104,200,617,1,1,1,1,1
+naphthalene,liquid density,105,333.15,748.4,0.6348,0.25838,748.4,0.27727,0
+naphthalene,vapour pressure,101,353.43,748.4,62.964,-8137.5,-5.6317,2.27E-18,6
+naphthalene,ideal gas isobaric heat capacity,107,298.15,1500,89232,267720,761.22,102010,2435.5
+naphthalene,liquid isobaric heat capacity,100,298,748,1,1,1,1,1
+naphthalene,heat of vaporization,106,353.43,748.4,70911000,0.46468,0,0,0
+naphthalene,second viral coefficients,104,200,1500,1,1,1,1,1
+n-butane,vapour pressure,101,134.86,425.12,66.343,-4363.2,-7.046,9.41E-06,2
+n-butane,liquid density,105,134.86,425.12,1.0677,0.27188,425.12,0.28688,
+n-butane,ideal gas isobaric heat capacity,107,298.15,1500,80154,162420,841.49,105750,2476.1
+n-butane,liquid isobaric heat capacity,100,134.86,400,191030,-1675,12.5,-0.03874,4.61E-05
+n-butane,heat of vaporization,106,134.86,425.12,36238000,0.8337,-0.82274,0.39613,
+n-butane,second viral coefficients,104,212.58,1500,0.149,-143,-10010000,-3.03E+18,4.03E+20
+n-decane,vapour pressure,101,243.51,617.7,112.73,-9749.6,-13.245,7.12E-06,2
+n-decane,liquid density,105,243.5,617.7,0.41084,0.25175,617.7,0.28571,
+n-decane,ideal gas isobaric heat capacity,107,200,1500,167200,535300,1614.1,378200,742
+n-decane,liquid isobaric heat capacity,100,243.51,460,278620,-197.1,1.0373,,
+n-decane,heat of vaporization,106,243.51,617.7,66126000,0.39797,,,
+n-decane,second viral coefficients,104,309.23,1500,0.48,-588.5,76060000,1.61E+21,3.99E+23
+n-dodecane,vapour pressure,101,263.57,658,137.47,-11976,-16.698,8.10E-06,2
+n-dodecane,liquid density,105,263.57,658,0.33267,0.24664,658,0.28571,
+n-dodecane,ideal gas isobaric heat capacity,107,200,1500,212950,663300,1715.5,451610,777.5
+n-dodecane,liquid isobaric heat capacity,100,263.57,433.15,508210,-1368.7,3.1015,,
+n-dodecane,heat of vaporization,106,263.57,658,77337000,0.40681,,,
+n-dodecane,second viral coefficients,104,329,1500,0.88,-1091,50300000,5.49E+21,1.50E+24
+n-heptane,vapour pressure,101,182.57,540.2,87.829,-6996.4,-9.8802,7.21E-06,2
+n-heptane,liquid density,105,182.57,540.2,0.61259,0.26211,540.2,0.28141,
+n-heptane,ideal gas isobaric heat capacity,107,200,1500,120150,400100,1676.6,274000,756.4
+n-heptane,liquid isobaric heat capacity,114,182.57,520,61.26,314410,1824.6,-2547.9,
+n-heptane,heat of vaporization,106,182.57,540.2,50014000,0.38795,,,
+n-heptane,second viral coefficients,104,270.1,1500,0.2746,-291,-44180000,-8.80E+19,1.29E+22
+n-hexadecane,vapour pressure,101,291.31,723,156.06,-15015,-18.941,6.82E-06,2
+n-hexadecane,liquid density,105,291.31,723,0.23289,0.23659,723,0.28571,0
+n-hexadecane,ideal gas isobaric heat capacity,107,200,1500,262830,879330,1691.2,626400,744.41
+n-hexadecane,liquid isobaric heat capacity,100,239,723,1,1,1,1,1
+n-hexadecane,heat of vaporization,106,291.31,723,101560000,0.45726,0,0,0
+n-hexadecane,second viral coefficients,104,293,723,1,1,1,1,1
+n-hexane,vapour pressure,101,177.83,507.6,104.65,-6995.5,-12.702,1.24E-05,2
+n-hexane,liquid density,105,177.83,507.6,0.70824,0.26411,507.6,0.27537,
+n-hexane,ideal gas isobaric heat capacity,107,200,1500,104400,352300,1694.6,236900,761.6
+n-hexane,liquid isobaric heat capacity,100,177.83,460,171212,-183.78,0.88734,,
+n-hexane,heat of vaporization,106,177.83,507.6,44544000,0.39002,,,
+n-hexane,second viral coefficients,104,253.7,1500,0.197,-200,-37100000,1.67E+19,-6.18E+21
+n-nonane,vapour pressure,101,219.66,594.6,109.35,-9030.4,-12.882,7.85E-06,2
+n-nonane,liquid density,105,219.66,594.6,0.46321,0.25444,594.6,0.28571,0
+n-nonane,ideal gas isobaric heat capacity,107,200,1500,151750,491500,1644.8,347000,749.6
+n-nonane,liquid isobaric heat capacity,100,219.66,325,383080,-1139.8,2.7101,0,0
+n-nonane,heat of vaporization,106,219.66,594.6,60370000,0.38522,0,0,0
+n-nonane,second viral coefficients,104,297.83,1500,0.3906,-468.6,66800000,7.89E+20,1.82E+23
+n-octane,vapour pressure,101,216.38,568.7,96.084,-7900.2,-11.003,7.18E-06,2
+n-octane,liquid density,105,216.38,568.7,0.5266,0.25693,568.7,0.28571,
+n-octane,ideal gas isobaric heat capacity,107,200,1500,135540,443100,1635.6,305400,746.4
+n-octane,liquid isobaric heat capacity,100,216.38,460,224830,-186.63,0.95891,,
+n-octane,heat of vaporization,106,216.38,568.7,55180000,0.38467,,,
+n-octane,second viral coefficients,104,284.38,1500,0.2739,-321.44,-66830000,-1.27E+20,1.61E+22
+n-pentane,vapour pressure,101,143.42,469.7,78.741,-5420.3,-8.8253,9.62E-06,2
+n-pentane,liquid density,105,143.42,469.7,0.84947,0.26726,469.7,0.27789,
+n-pentane,ideal gas isobaric heat capacity,107,200,1500,88050,301100,1650.2,189200,747.6
+n-pentane,liquid isobaric heat capacity,100,143.42,390,159080,-270.5,0.99537,,
+n-pentane,heat of vaporization,106,143.42,469.7,39109000,0.38681,,,
+n-pentane,second viral coefficients,104,234.8,1500,0.1916,-198,-16400000,-1.79E+19,2.69E+21
+n-tetradecane,vapour pressure,101,279.01,693,140.47,-13231,-16.859,6.59E-06,2
+n-tetradecane,liquid density,105,279.01,693,0.27248,0.24007,693,0.28571,0
+n-tetradecane,ideal gas isobaric heat capacity,107,200,1500,230820,786780,1682.3,544860,743.1
+n-tetradecane,liquid isobaric heat capacity,100,279.01,526.73,353140,29.13,0.86116,0,0
+n-tetradecane,heat of vaporization,106,279.01,693,90539000,0.44467,0,0,0
+n-tetradecane,second viral coefficients,104,346.5,1500,0.48209,-501.32,-285940000,-2.57E+21,4.552323
+n-undecane,vapour pressure,101,247.57,639,131,-11143,-15.855,8.19E-06,2
+n-undecane,liquid density,105,247.57,639,0.36703,0.24876,639,0.28571,0
+n-undecane,ideal gas isobaric heat capacity,107,200,1500,195290,609980,1708.7,413020,775.4
+n-undecane,liquid isobaric heat capacity,100,200,640,1,1,1,1,1
+n-undecane,heat of vaporization,106,247.57,639,72284000,0.40607,0,0,0
+n-undecane,second viral coefficients,104,200,1500,1,1,1,1,1
+o-xylene,vapour pressure,101,247.98,630.3,90.405,-7955.2,-10.086,5.59E-06,2
+o-xylene,liquid density,105,247.98,630,0.69962,0.26143,630.3,0.27365,
+o-xylene,ideal gas isobaric heat capacity,107,200,1500,85210,329540,1494.4,211500,675.8
+o-xylene,liquid isobaric heat capacity,100,247.98,417.58,36500,1017.5,-2.63,0.00302,
+o-xylene,heat of vaporization,106,247.98,630.3,55395000,0.37788,,,
+o-xylene,second viral coefficients,104,315.1,1500,0.1464,-94.4,-87730000,-2.27E+20,3.04E+22
+pentanal,vapour pressure,101,182,566.1,149.58,-8890,-20.697,0.022101,1
+pentanal,liquid density,105,182,566.1,0.83871,0.26252,566.1,0.29444,0
+pentanal,ideal gas isobaric heat capacity,107,200,1500,107430,283630,1954.9,201460,890.44
+pentanal,liquid isobaric heat capacity,100,182,566.1,0.83871,0.26252,566.1,0.29444,0
+pentanal,heat of vaporization,106,182,566.1,51478000,0.37541,0,0,0
+pentanal,second viral coefficients,104,283.05,1500,0.1974,-224.84,-40107000,-1.95E+20,3.01E+22
+pentyl acetate,liquid density,105,202.35,599.9,0.60006,0.26519,599.9,0.29379,0
+pentyl acetate,vapour pressure,101,202.35,599.9,137.96,-10354,-17.182,1.12E-05,2
+pentyl acetate,ideal gas isobaric heat capacity,107,298.15,1200.15,92900,401300,1296,255700,572.61
+pentyl acetate,liquid isobaric heat capacity,100,298.15,421.15,120280,441.05,0,0,0
+pentyl acetate,heat of vaporization,106,202.35,599.9,92508000,1.487,-1.1672,0.14485,0
+pentyl acetate,second viral coefficients,104,299.95,1500,0.30755,-346.6,-78122000,-2.45E+20,2.54E+22
+pentyl formate,vapour pressure,101,199.65,576,86.931,-8112.4,-9.2418,2.33E-17,6
+pentyl formate,liquid density,105,199.65,576,0.6623,0.25775,576,0.3086,0
+pentyl formate,ideal gas isobaric heat capacity,107,298.15,1500,119500,348800,1813.3,260200,788
+pentyl formate,liquid isobaric heat capacity,100,298.15,406.6,137310,346.86,0,0,0
+pentyl formate,heat of vaporization,106,199.65,576,60704000,0.075162,1.1681,-0.97381,0
+pentyl formate,second viral coefficients,104,288,1500,0.26395,-270.47,-64215000,-2.15E+20,2.72E+22
+propanal,vapour pressure,101,170,504.4,80.581,-5869.1,-8.9301,8.22E-06,2
+propanal,liquid density,105,170,504.4,1.296,0.26439,504.4,0.29471,0
+propanal,ideal gas isobaric heat capacity,107,200,1500,71740,191400,2014.4,117080,930.6
+propanal,liquid isobaric heat capacity,100,200,328.75,99306,115.73,,,
+propanal,heat of vaporization,106,170,504.4,41492000,0.36751,0,0,0
+propanal,second viral coefficients,104,286.25,1500,0.13341,-142.87,19892000,5.46E+19,2.90E+21
+propane,vapour pressure,101,85.47,369.83,59.078,-3492.6,-6.0669,1.09E-05,2
+propane,liquid density,105,85.47,369.83,1.3757,0.27453,369.83,0.29359,
+propane,ideal gas isobaric heat capacity,107,298.15,1500,59474,126610,844.31,86165,2482.7
+propane,liquid isobaric heat capacity,114,85.47,360,62.983,113630,633.21,-873.46,
+propane,heat of vaporization,106,85.47,369.83,29209000,0.78237,-0.77319,0.39246,
+propane,second viral coefficients,104,184.91,1500,0.1127,-99.2,-4510000,3.09E+17,-7.05E+19
+propyl acetate,vapour pressure,101,178.15,549.73,115.16,-8433.9,-13.934,1.03E-05,2
+propyl acetate,liquid density,105,178.15,549.73,0.73041,0.25456,549.73,0.27666,0
+propyl acetate,ideal gas isobaric heat capacity,107,298.15,1500,179940,175300,1196,-412000,108.2
+propyl acetate,liquid isobaric heat capacity,100,274.7,404.7,83400,384.1,0,0,0
+propyl acetate,heat of vaporization,106,178.15,549.73,54327000,0.407,0,0,0
+propyl acetate,second viral coefficients,104,274.7,1500,0.1873,-211.8,-46040000,-8.00E+19,6.88E+21
+propyl butanoate,liquid density,105,177.95,593.7,0.59878,0.26464,593.7,0.29713,0
+propyl butanoate,vapour pressure,101,177.95,593.7,58.395,-6876.3,-5.0335,3.27E-18,6
+propyl butanoate,ideal gas isobaric heat capacity,107,298,1200,119200,404400,1627,294700,702.2
+propyl butanoate,liquid isobaric heat capacity,100,240,415.85,125640,430.99,0,0,0
+propyl butanoate,heat of vaporization,106,177.95,593.7,56164000,0.52529,-0.67655,0.55881,0
+propyl butanoate,second viral coefficients,104,296.85,1500,0.3094,-348.87,-75002000,-2.23E+20,2.28E+22
+propyl formate,vapour pressure,101,180.25,538,104.08,-7535.9,-12.348,9.60E-06,2
+propyl formate,liquid density,105,180.25,538,0.915,0.26134,538,0.28,0
+propyl formate,ideal gas isobaric heat capacity,107,298.15,1500,87100,244700,1925.4,188800,821.3
+propyl formate,liquid isobaric heat capacity,100,298.15,398.15,75700,326.1,0,0,0
+propyl formate,heat of vaporization,106,180.25,538,49687000,0.4025,0,0,0
+propyl formate,second viral coefficients,104,269,1500,0.15564,-170.83,-32380000,-3.77E+19,1.75E+21
+propyl propionate,vapour pressure,101,197.25,568.6,78.318,-7256.9,-8.228,4.86E-06,2
+propyl propionate,liquid density,105,197.25,568.6,0.6761,0.26304,568.6,0.28901,0
+propyl propionate,ideal gas isobaric heat capacity,107,298.15,1200,107590,348870,1687.3,261810,725.32
+propyl propionate,liquid isobaric heat capacity,100,284.3,426.45,89219,320.1,0.47633,0,0
+propyl propionate,heat of vaporization,106,197.25,568.6,60519000,0.4486,0,0,0
+propyl propionate,second viral coefficients,104,289,1500,0.22005,-264.39,-67691000,-1.20E+20,5.28E+21
+p-xylene,vapour pressure,101,286.41,616.2,88.72,-7741.2,-9.8693,6.08E-06,2
+p-xylene,liquid density,105,286.41,616.2,0.67752,0.25887,616.2,0.27596,
+p-xylene,ideal gas isobaric heat capacity,107,200,1500,75120,339700,1492.8,224700,675.1
+p-xylene,liquid isobaric heat capacity,100,286.41,600,-35500,1287.2,-2.599,0.002426,
+p-xylene,heat of vaporization,106,286.41,616.2,53819000,0.36695,,,
+p-xylene,second viral coefficients,104,338.9,1500,0.06736,50.5,-106470000,8.98E+19,-1.56E+22
+tert-amyl methyl ether,liquid density,105,197.7,534,0.68851,0.26576,534,0.27068,0
+tert-amyl methyl ether,ideal gas isobaric heat capacity,107,298.15,1500,117650,354600,1605,232000,726.7
+tert-amyl methyl ether,liquid isobaric heat capacity,100,300,500,1958977,-19961.88,82.55063,-0.1476428,9.85E-05
+tert-amyl methyl ether,heat of vaporization,106,197.7,534,48037000,0.44061,-0.060943,0.0060419,0
+tert-amyl methyl ether,second viral coefficients,104,267,1500,0.24468,-274.77,-35969000,-2.05E+19,-2.53E+21
+tert-amyl methyl ether,vapour pressure,101,197.7,534,63.342,-5911.7,-5.8464,1.61E-17,6
+tetralin,heat of vaporization,106,237.38,720,68086000,0.43054,0,0,0
+tetralin,vapour pressure,101,242.79,687,100.94,-9055.5,-11.585,6.15E-06,2
+tetralin,liquid density,105,237.38,720,0.67717,0.27772,720,0.2878,0
+tetralin,ideal gas isobaric heat capacity,107,298.15,1500,105550,321010,782.48,143950,2433
+tetralin,liquid isobaric heat capacity,100,230,700,1,1,1,1,1
+tetralin,second viral coefficients,104,230,700,1,1,1,1,1
+toluene,vapour pressure,101,178.18,591.75,76.945,-6729.8,-8.179,5.30E-06,2
+toluene,liquid density,105,178.18,591.75,0.8792,0.27136,591.75,0.29241,0
+toluene,ideal gas isobaric heat capacity,107,200,1500,58140,286300,1440.6,189800,650.43
+toluene,liquid isobaric heat capacity,100,178.18,500,140140,-152.3,0.695,0,0
+toluene,heat of vaporization,106,178.18,591.75,49507000,0.37742,0,0,0
+toluene,second viral coefficients,104,295.9,1500,0.18371,-215.67,43127000,8.15E+19,1.21E+22
+trans-decalin,vapour pressure,101,242.79,687,100.94,-9055.5,-11.585,6.15E-06,2
+trans-decalin,liquid density,105,242.79,687,0.56798,0.27271,687,0.28959,0
+trans-decalin,ideal gas isobaric heat capacity,107,200,1500,86840,554800,1357.6,320650,651.1
+trans-decalin,heat of vaporization,106,242.79,687,60320000,0.3904,0,0,0
+trans-decalin,second viral coefficients,104,240,687,1,1,1,1,1
+trans-decalin,liquid isobaric heat capacity,100,240,650,1,1,1,1,1
+water,vapour pressure,101,273.16,647.096,73.649,-7258.2,-7.3037,4.17E-06,2
+water,liquid density,116,273.16,647.096,17.863,58.606,-95.396,213.89,-141.26
+water,ideal gas isobaric heat capacity,107,100,2273.15,33363,26790,2610.5,8896,1169
+water,liquid isobaric heat capacity,100,273.16,533.15,276370,-2090.1,8.125,-0.014116,9.37E-06
+water,heat of vaporization,106,273.16,647.096,51546000,0.28402,-0.15843,0.2375,
+water,second viral coefficients,104,273.15,2273.1,0.02222,-26.38,-16750000,-3.89E+19,3.13321

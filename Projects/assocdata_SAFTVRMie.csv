@@ -1,0 +1,4 @@
+Clapeyron Database File
+SAFTVRMie Parameters [csvtype = assoc, grouptype = unknown]
+species1,species2,site1,site2,epsilon_assoc,bondvol
+methanol,methanol,e,H,2742.788404700823,1.2458763333490989e-28
