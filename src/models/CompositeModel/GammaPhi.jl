@@ -81,7 +81,7 @@ function PT_property(model::GammaPhi,p,T,z,phase,threaded,vol0,f::F,USEP::Val{Us
     #=
     Calculate PT properties as the following:
     prop = ∑xi*prop(pure[i],p,T) + excess_prop(activity,T,x) + prop(reference_state,T)
-    
+
     Vapour properties are calculated with the fluid model
     =#
     if is_vapour(phase)
@@ -150,12 +150,14 @@ function PTFlashWrapper(model::GammaPhi,p,T::Number,equilibrium::Symbol)
         g_pure = [VT_gibbs_free_energy(gas_model(pures[i]),vv_pure[i],T) for i in 1:length(model)]
         return PTFlashWrapper(model.components,model,sats,ϕpure,g_pure,equilibrium)
     end
-
 end
 
 __tpflash_cache_model(model::GammaPhi,p,T,z,equilibrium) = PTFlashWrapper(model,p,T,equilibrium)
 
-function update_K!(lnK,wrapper::PTFlashWrapper{<:GammaPhi},p,T,x,y,volx,voly,phasex,phasey,β = nothing,inx = FillArrays.Fill(true,length(x)),iny = inx)
+function update_K!(lnK,wrapper::PTFlashWrapper{<:GammaPhi},p,T,x,y,β,vols,phases,non_inw,cache = nothing)
+    volx,voly = vols
+    phasex,phasey = phases
+    non_inx,non_iny = non_inw
     model = wrapper.model
     fluidmodel = model.fluid.model
     sats = wrapper.sat
@@ -167,14 +169,14 @@ function update_K!(lnK,wrapper::PTFlashWrapper{<:GammaPhi},p,T,x,y,volx,voly,pha
     γx = activity_coefficient(model, p, T, x)
     volx = volume(fluidmodel, p, T, x, phase = phasex, vol0 = volx)
     _0 = zero(eltype(lnK))
-
+    is_ideal = fluidmodel isa IdealModel
     if β === nothing
         _0 = zero(eltype(lnK))
         gibbs = _0/_0
     else
         gibbs = _0
         for i in eachindex(x)
-            if inx[i]
+            if !non_inx[i]
                 g_E_x = x[i]*RT*log(γx[i])
                 g_ideal_x = x[i]*RT*log(x[i])
                 g_pure_x = x[i]*g_pures[i]
@@ -184,22 +186,28 @@ function update_K!(lnK,wrapper::PTFlashWrapper{<:GammaPhi},p,T,x,y,volx,voly,pha
     end
 
     if is_vapour(phasey)
-        lnϕy, voly = lnϕ(gas_model(fluidmodel), p, T, y; phase=phasey, vol0=voly)
+        lnϕy, voly = lnϕ(gas_model(fluidmodel), p, T, y, cache; phase=phasey, vol0=voly)
         for i in eachindex(lnK)
-            if iny[i]
+            if non_inx[i]
+                lnK[i] = Inf
+            elseif non_iny[i]
+                lnK[i] = -Inf
+            else
                 ϕli = fug[i]
                 p_i = sats[i][1]
-                lnK[i] = log(γx[i]*p_i*ϕli/p) - lnϕy[i] + volx*(p - p_i)/RT
-                gibbs += β*y[i]*(log(y[i]) + lnϕy[i])
+                lnKi = log(γx[i]*p_i*ϕli/p) - lnϕy[i]
+                !is_ideal && (lnKi += volx*(p - p_i)/RT) #add poynting corrections only if the fluid model itself has non-ideal corrections
+                lnK[i] = lnKi
             end
+            !non_iny[i] && β !== nothing && (gibbs += β*y[i]*(log(y[i]) + lnϕy[i]))
         end
     else
         γy = activity_coefficient(model, p, T, y)
-        lnK .= log.(γx./γy)
+        lnK .= log.(γx ./ γy)
         voly = volume(fluidmodel, p, T, y, phase = phasey, vol0 = voly)
         if β !== nothing
             for i in eachindex(y)
-                if iny[i]
+                if !non_inx[i]
                     g_E_y = y[i]*RT*log(γy[i])
                     g_ideal_y = y[i]*RT*(log(y[i]))
                     g_pure_y = y[i]*g_pures[i]
@@ -210,6 +218,11 @@ function update_K!(lnK,wrapper::PTFlashWrapper{<:GammaPhi},p,T,x,y,volx,voly,pha
     end
 
     return lnK,volx,voly,gibbs
+end
+
+#do not cache fugacity coefficient calculations if the model is an ideal model
+function ∂lnϕ_cache(model::PTFlashWrapper{GammaPhi{<:Any,<:IdealModel}}, p, T, z, dt::Val{B}) where B
+    return nothing
 end
 
 function __tpflash_gibbs_reduced(wrapper::PTFlashWrapper{<:GammaPhi},p,T,x,y,β,eq)
