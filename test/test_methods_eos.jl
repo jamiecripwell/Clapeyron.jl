@@ -386,7 +386,7 @@ GC.gc()
     T = 298.15
     @testset "Bulk properties" begin
         @test Clapeyron.volume(system, p, T) ≈ 4.7367867309516085e-5 rtol = 1e-6
-        @test_broken Clapeyron.speed_of_sound(system, p, T) ≈ 2136.222735675237 rtol = 1e-6
+        @test Clapeyron.speed_of_sound(system, p, T) ≈ 2136.222735675237 rtol = 1e-6
     end
     @testset "VLE properties" begin
         @test Clapeyron.crit_pure(system)[1] ≈ 512.6400000000001 rtol = 1E-6
@@ -425,8 +425,8 @@ end
         @test crit_pure(com1)[1] ≈ 647.13
         @test Clapeyron.volume(system, p, T, z_bulk) ≈ 7.967897222918716e-5 rtol = 1e-6
         @test Clapeyron.volume(comp_system, p, T, z_bulk) ≈ 7.967897222918716e-5 rtol = 1e-6
-        @test Clapeyron.speed_of_sound(system, p, T, z_bulk) ≈ 1483.4508395757005 rtol = 1e-6
-        @test Clapeyron.speed_of_sound(comp_system, p, T, z_bulk) ≈ 1483.4508395757005 rtol = 1e-6
+        @test Clapeyron.speed_of_sound(system, p, T, z_bulk) ≈ 1551.9683977722198 rtol = 1e-6
+        @test Clapeyron.speed_of_sound(comp_system, p, T, z_bulk) ≈ 1551.9683977722198 rtol = 1e-6
         @test Clapeyron.mixing(system, p, T, z_bulk, Clapeyron.gibbs_free_energy) ≈ -356.86007792929263 rtol = 1e-6
         @test Clapeyron.mixing(system, p, T, z_bulk, Clapeyron.enthalpy) ≈ 519.0920708672975 rtol = 1e-6
         #test that we are actually considering the reference state, even in the vapour phase.

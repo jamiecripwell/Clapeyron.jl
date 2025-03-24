@@ -120,7 +120,7 @@ function dew_pressure(model::EoSModel, T, y,method::ThermodynamicMethod)
     y_r = y[idx_r]
 
     if has_a_res(model)
-        dew_pressure_result_primal = dew_pressure_impl(model_r,primalval(T),primalval(y_r),index_reduction(method,idx_r))
+        dew_pressure_result_primal = dew_pressure_impl(primalval(model_r),primalval(T),primalval(y_r),index_reduction(method,idx_r))
         dew_pressure_result = dew_pressure_ad(model_r,T,y_r,dew_pressure_result_primal)
     else
         dew_pressure_result = dew_pressure_impl(model_r,T,y_r,index_reduction(method,idx_r))
@@ -145,11 +145,9 @@ function __x0_dew_temperature(model::EoSModel,p,y,Tx0 = nothing,condensables = F
         
     if Tx0 !== nothing
         _crit = isnothing(crit) ?  FillArrays.fill(nothing,length(model)) : crit
-        K = suggest_K(model,p,Tx0,x,pure,volatiles,_crit)
+        K = suggest_K(model,p,Tx0,y,pure,condensables,_crit)
         x = rr_flash_liquid(K,y,one(eltype(K)))
-        for i in 1:length(x)
-            !condensables[i] && (x[i] = 0)
-        end
+        zero_non_equilibria!(x,condensables)
         x ./= sum(x)
         vl0 = volume(model,p,Tx0,x,phase = :l)
         vv0 = volume(model,p,Tx0,y,phase = :v)
@@ -176,9 +174,7 @@ function __x0_dew_temperature(model::EoSModel,p,y,Tx0 = nothing,condensables = F
     end
     K = suggest_K(model,p,T0,y,pure,FillArrays.fill(true,length(model)),_crit)
     x = rr_flash_liquid(K,y,one(eltype(K)))
-    for i in 1:length(x)
-        !condensables[i] && (x[i] = 0)
-    end
+    zero_non_equilibria!(x,condensables)
     x ./= sum(x)
     vl0 = volume(model,p,T0,x,phase = :l)
     vv0 = volume(model,p,T0,y,phase = :v)
@@ -288,7 +284,7 @@ function dew_temperature(model::EoSModel,p,y,method::ThermodynamicMethod)
     y_r = y[idx_r]
     
     if has_a_res(model)
-        dew_temperature_result_primal =  dew_temperature_impl(model_r,primalval(p),primalval(y_r),index_reduction(method,idx_r))
+        dew_temperature_result_primal =  dew_temperature_impl(primalval(model_r),primalval(p),primalval(y_r),index_reduction(method,idx_r))
         dew_temperature_result =  dew_temperature_ad(model_r,p,y_r,dew_temperature_result_primal)
     else
         dew_temperature_result =  dew_temperature_impl(model_r,p,y_r,index_reduction(method,idx_r))

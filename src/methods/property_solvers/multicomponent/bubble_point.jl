@@ -197,6 +197,7 @@ function __x0_bubble_pressure(model::EoSModel,T,x,y0 = nothing,volatiles = FillA
     vli = getindex.(pure_vals,2)
     vvi = getindex.(pure_vals,3)
     xipi = p0 .* x
+    zero_non_equilibria!(xipi,volatiles)
     p = sum(xipi)
     if isnothing(y0)
         y = xipi
@@ -287,7 +288,7 @@ function bubble_pressure(model::EoSModel, T, x, method::ThermodynamicMethod)
     end
     x_r = x[idx_r]
     if has_a_res(model)
-        bubble_pressure_result_primal = bubble_pressure_impl(model_r,primalval(T),primalval(x_r),index_reduction(method,idx_r))
+        bubble_pressure_result_primal = bubble_pressure_impl(primalval(model_r),primalval(T),primalval(x_r),index_reduction(method,idx_r))
         bubble_pressure_result = bubble_pressure_ad(model_r,T,x_r,bubble_pressure_result_primal)
     else
         bubble_pressure_result = bubble_pressure_impl(model_r,T,x_r,index_reduction(method,idx_r))
@@ -312,9 +313,7 @@ function __x0_bubble_temperature(model::EoSModel,p,x,Tx0 = nothing,volatiles = F
         _crit = isnothing(crit) ?  FillArrays.fill(nothing,length(model)) : crit
         K = suggest_K(model,p,Tx0,x,pure,volatiles,_crit)
         y = rr_flash_vapor(K,x,zero(eltype(K)))
-        for i in 1:length(y)
-            !volatiles[i] && (y[i] = 0)
-        end
+        zero_non_equilibria!(y,volatiles)
         y ./= sum(y)
         vl0 = volume(model,p,Tx0,x,phase = :l)
         vv0 = volume(model,p,Tx0,y,phase = :v)
@@ -336,9 +335,7 @@ function __x0_bubble_temperature(model::EoSModel,p,x,Tx0 = nothing,volatiles = F
     T0 = Roots.solve(prob)
     K = suggest_K(model,p,T0,x,pure,volatiles,_crit)
     y = rr_flash_vapor(K,x,zero(eltype(K)))
-    for i in 1:length(y)
-        !volatiles[i] && (y[i] = 0)
-    end
+    zero_non_equilibria!(y,volatiles)
     y ./= sum(y)
     vl0 = volume(model,p,T0,x,phase = :l)
     vv0 = volume(model,p,T0,y,phase = :v)
@@ -457,7 +454,7 @@ function bubble_temperature(model::EoSModel, p , x, method::ThermodynamicMethod)
 
 
     if has_a_res(model)
-        bubble_temperature_result_primal =  bubble_temperature_impl(model_r,primalval(p),primalval(x_r),index_reduction(method,idx_r))
+        bubble_temperature_result_primal =  bubble_temperature_impl(primalval(model_r),primalval(p),primalval(x_r),index_reduction(method,idx_r))
         bubble_temperature_result =  bubble_temperature_ad(model_r,p,x_r,bubble_temperature_result_primal)
     else
         bubble_temperature_result =  bubble_temperature_impl(model_r,p,x_r,index_reduction(method,idx_r))

@@ -395,9 +395,13 @@ function liquid_pressure_from_virial(model,T,B = second_virial_coefficient(model
     because at near critical pressures, the virial predicted pressure is below the liquid spinodal pressure
     in one sense, γc is a correction factor.
     =#
+    
     vv_virial = -2*B #maximum gas volume predicted by virial equation
     pv_virial = -0.25*Rgas(model)*T/B #maximum virial predicted pressure
     γT = pv_eos/pv_virial
+
+    #this handles pv_eos = NaN and pv_eos < pv_virial, returning an equivalent result to using pv_eos = pv_virial
+    !(pv_eos > pv_virial) && (return 1.12491990759086*pv_virial*oneunit(pv_eos))
     #fitted function, using all coolprop fluids, at Tr = 1
     aγ,bγ,cγ = 1.2442071971165476e-5, -8.695786307570637, 1.0505452946870144
     γc = aγ*exp(-γT*bγ) + cγ
@@ -470,6 +474,17 @@ function pure_spinodal_newton_bracket(model,T,v,f,dp_scale,z = SA[1.0])
     end
 
     return zero(vs)/zero(vs)
+end
+
+function pure_spinodal_newton(model,T,z,v0,dp_scale)
+    function dp(vs) #dpdrho = 0
+        p(rho) = pressure(model,1/rho,T,z)
+        pj,dpj,d2pj = Solvers.f∂f∂2f(p,1/vs)
+        return dpj/dp_scale,dpj/d2pj/dp_scale
+    end
+
+    prob = Roots.ZeroProblem(dp,1/v0)
+    v = Roots.solve(prob,Roots.Newton())
 end
 
 function pure_spinodal(model,T::K,v_lb::K,v_ub::K,phase::Symbol,retry,z = SA[1.0]) where K

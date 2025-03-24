@@ -195,7 +195,7 @@ function wilson_k_values!(K,model::EoSModel,p,T,crit = nothing)
         Tc,pc,_ = crit[i]
         ps = first(saturation_pressure(pure_i,0.7*Tc))
         ω = -log10(ps/pc) - 1.0
-        K[i] = exp(log(pc/p)+5.37269855031944*(1+ω)*(1-Tc/T))
+        K[i] = exp(log(pc/p)+5.3726985503194395*(1+ω)*(1-Tc/T)) #5.37 = log(10)*7/3
     end
     return K
 end
@@ -337,6 +337,13 @@ end
 bubble_temperature_ad(model,p,z,result) = bubbledew_temperature_ad(model,p,z,result,true)
 dew_temperature_ad(model,p,z,result) = bubbledew_temperature_ad(model,p,z,result,false)
 
+function zero_non_equilibria!(w,in_equilibria)
+    for i in eachindex(w)
+        in_equilibria[i] || (w[i] = 0)
+    end
+    return w
+end
+
 include("fugacity.jl")
 include("rachford_rice.jl")
 include("bubble_point.jl")
@@ -356,6 +363,6 @@ include("solids/eutectic_point.jl")
 export bubble_pressure_fug, bubble_temperature_fug, dew_temperature_fug, dew_pressure_fug
 export bubble_pressure,    dew_pressure,    LLE_pressure,    azeotrope_pressure, VLLE_pressure
 export bubble_temperature, dew_temperature, LLE_temperature, azeotrope_temperature, VLLE_temperature
-export crit_mix, UCEP_mix, UCST_mix
+export crit_mix, UCEP_mix, UCST_pressure, UCST_temperature, UCST_mix
 export krichevskii_parameter
 export sle_solubility, eutectic_point, slle_solubility
