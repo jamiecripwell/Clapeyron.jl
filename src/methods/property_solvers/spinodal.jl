@@ -39,13 +39,7 @@ function spinodal_pressure(model::EoSModel,T,z=SA[1.];v0=nothing,phase=:unknown)
     end
 
     f(vz) = det_∂²A∂ϱᵢ²(model, T, x ./ exp(vz))
-
-    function fdf(vz)
-        fx,dfx = Solvers.f∂f(f,vz)
-        return fx,fx/dfx
-    end
-
-    prob = Roots.ZeroProblem(fdf,log(_v0))
+    prob = Roots.ZeroProblem(Solvers.to_newton(f),log(_v0))
     log_V_spin = Roots.solve(prob,Roots.Newton())
     V_spin = exp(log_V_spin)
     p_spin = pressure(model,V_spin,T,x)
@@ -184,6 +178,15 @@ function Obj_crit_pure_sp(xx,model,p,z,ps,lb_v)
     Vᵢ,Tᵢ = exp(xx[1]),xx[2]
     pᵢ,dpdVᵢ = p∂p∂V(model,Vᵢ,Tᵢ,z)
     return SVector((pᵢ-p)/ps,dpdVᵢ/(ps*lb_v))
+end
+
+function eigmin_minimum_pressure(model,T,z,v0hi,v0lo = -second_virial_coefficient(model,T,z))
+    f0(v) = diffusive_eigvalue(model,exp(v),T,z)
+    ln_vhi = log(v0hi)
+    ln_vlo = log(v0lo)
+    ln_v = Solvers.optimize(f0,(ln_vhi,ln_vlo),Solvers.BoundOptim1Var())
+    v = exp(ln_v)
+    return pressure(model,v,T,z),v,f0(ln_v)
 end
 
 export spinodal_pressure, spinodal_temperature

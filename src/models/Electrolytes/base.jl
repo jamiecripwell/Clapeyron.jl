@@ -67,6 +67,8 @@ function ESElectrolyte(solvents,ions;
     ionmodel_userlocations = can_nt(userlocations) ? userlocations : userlocation_merge(neutral_path,userlocations)
     init_ionmodel = @initmodel ionmodel(solvents,ions;RSPmodel=init_RSP,userlocations =ionmodel_userlocations,verbose=verbose)
 
+    components = init_neutralmodel.components
+
     references = String[]
     model = ESElectrolyte(components,icomponents,charge,init_idealmodel,init_neutralmodel,init_ionmodel,references)
     set_reference_state!(model,reference_state;verbose)
@@ -89,6 +91,10 @@ end
 
 function x0_volume_liquid(model::ESElectrolyteModel,p,T,z)
     return x0_volume_liquid(model.neutralmodel,p,T,z)*1.15
+end
+
+function x0_volume_gas(model::ESElectrolyteModel,p,T,z)
+    return x0_volume_gas(model.neutralmodel,p,T,z)
 end
 
 function mw(model::ElectrolyteModel)

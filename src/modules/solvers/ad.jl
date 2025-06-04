@@ -1,7 +1,7 @@
 
 
 struct ∂Tag end
-
+const ForwardDiffStatic = Base.get_extension(ForwardDiff,:ForwardDiffStaticArraysExt)
 recursive_fd_value(x::Number) = ForwardDiff.value(x)
 recursive_fd_value(x::Tuple) = recursive_fd_value.(x)
 recursive_fd_value(x::AbstractArray) = recursive_fd_value.(x)
@@ -9,7 +9,6 @@ recursive_fd_value(x::AbstractArray) = recursive_fd_value.(x)
 recursive_fd_extract_derivative(T::TT,x::Number) where TT = ForwardDiff.extract_derivative(T,x)
 recursive_fd_extract_derivative(T::TT,x::Tuple) where TT = recursive_fd_extract_derivative.(T,x)
 recursive_fd_extract_derivative(T::TT,x::AbstractArray) where TT = recursive_fd_extract_derivative.(T,x)
-
 
 @inline function derivative(f::F, x::R) where {F,R<:Real}
     T = typeof(ForwardDiff.Tag(f, R))
@@ -168,8 +167,10 @@ function FJ_ad(f::F,x::SVector{2,R}) where {F,R<:Real}
 end
 
 function FJ_ad(f::F,x::X) where {F,X}
-    Fx = f(x)
-    Jx = ForwardDiff.jacobian(f,x)
+    Jresult = DiffResults.JacobianResult(x)
+    result = ForwardDiff.jacobian!(Jresult,f,x)
+    Fx = DiffResults.value(result)
+    Jx = DiffResults.jacobian(result)
     return Fx,Jx
 end
 
@@ -192,6 +193,51 @@ end
           _, d2fdy2 = df2.partials.values
     d2f = SMatrix{2}(d2fdx2,d2fdxdy,d2fdxdy,d2fdy2)
     return (fx,df,d2f)
+end
+
+
+#trying to fix ForwardDiff$720
+
+@generated function _extract_jacobian(::Type{T}, ydual::ForwardDiff.Partials{M}, x::S) where {T,M,S<:StaticArray}
+    N = length(x)
+    result = Expr(:tuple, [:(ForwardDiff.partials(T, ydual[$i], $j)) for i in 1:M, j in 1:N]...)
+    return quote
+        $(Expr(:meta, :inline))
+        V = StaticArrays.similar_type(S, ForwardDiff.valtype(eltype($ydual)), Size($M, $N))
+        return V($result)
+    end
+end
+
+@generated function _extract_gradient(::Type{T}, y::Real, x::S) where {T,S<:StaticArray}
+    result = Expr(:tuple, [:(ForwardDiff.partials(T, y, $i)) for i in 1:length(x)]...)
+    return quote
+        $(Expr(:meta, :inline))
+        V = StaticArrays.similar_type(S, ForwardDiff.valtype($y))
+        return V($result)
+    end
+end
+
+function static_fgh(result::DiffResults.ImmutableDiffResult, f::F, x::SVector) where {F}
+    T = typeof(ForwardDiff.Tag(f, eltype(x)))
+    d1 = ForwardDiffStatic.dualize(T, x)
+    d2 = ForwardDiffStatic.dualize(T, d1)
+    fd2 = f(d2)
+    val = ForwardDiff.value(T,ForwardDiff.value(T,fd2))
+    grad = _extract_gradient(T,ForwardDiff.value(T,fd2), x)
+    hess = _extract_jacobian(T,ForwardDiff.partials(T,fd2), x)
+    result = DiffResults.hessian!(result, hess)
+    result = DiffResults.gradient!(result, grad)
+    result = DiffResults.value!(result, val)
+    return result
+end
+
+#obtaining GradientConfig from HessianConfig
+
+function _GradientConfig(hconfig::ForwardDiff.HessianConfig{T,V,N}) where {T,V,N}
+    gconf,jconf = hconfig.gradient_config,hconfig.jacobian_config
+    seeds = jconf.seeds
+    duals = jconf.duals[1]
+    return ForwardDiff.GradientConfig{T,V,N,typeof(duals)}(seeds,duals)
 end
 
 chunksize(::ForwardDiff.Chunk{C}) where {C} = C
@@ -235,7 +281,10 @@ primalval(x::ForwardDiff.Dual) = primalval(ForwardDiff.value(x))
 @generated function primalval_struct(x::M) where M
     names = fieldnames(M)
     Base.typename(M).wrapper
-    primalvals = Expr(:call,Base.typename(M).wrapper,map(name -> :(primalval(x.$name)) ,names)...)
+    primalvals = Expr(:call,Base.typename(M).wrapper)
+    for name in names
+        push!(primalvals.args,:(primalval(x.$name)))
+    end
     return primalvals
 end
 
@@ -302,3 +351,27 @@ function grad_at_i(f::F,x::X,i,TT = eltype(x)) where {F,X <: AbstractVector{R}} 
     fx = f(∂x)
     return ForwardDiff.extract_derivative(T, fx)
 end
+
+sqrt_strong_zero(x) = sqrt(x)
+iszeroprimal(x) = iszero(x)
+iszeroprimal(x::ForwardDiff.Dual) = iszero(primalval(x))
+
+strong_zero(y,x) = y
+
+function strong_zero(y::ForwardDiff.Dual{T,V,P},x::ForwardDiff.Dual{T,V,P}) where {T,V,P}
+    dx = ForwardDiff.partials(x)
+    dy = ForwardDiff.partials(y)
+    dy2 = strong_zero(dy,dx)
+    return ForwardDiff.Dual{T,V,P}(x.value,dy2)
+end
+
+function strong_zero(dy::ForwardDiff.Partials{N,V},dx::ForwardDiff.Partials{N,V}) where {N,V}
+    dx_tuple = dx.values
+    dy_tuple = dy.values
+    #is_zero_x = map(iszeroprimal,dx_tuple)
+    dy2_tuple = ntuple(i -> iszeroprimal(dx_tuple[i]) ? zero(dy_tuple[i]) : dy_tuple[i],Val(N))
+    return ForwardDiff.Partials{N,V}(dy2_tuple)
+end
+
+strong_zero(f::Base.Callable,x) = f(x)
+strong_zero(f::Base.Callable,x::ForwardDiff.Dual) = strong_zero(f(x),x)
