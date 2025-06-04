@@ -1,5 +1,5 @@
 Clapeyron Estimator,,
-[method = saturation_p_rhol],,
+[method = saturation_P_and_rho, species = ethanol],,
 T,out_pre,out_rho
 257,467.6,17819.57453
 264.09,818.85,17693.24075

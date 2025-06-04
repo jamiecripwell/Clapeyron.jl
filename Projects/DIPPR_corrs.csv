@@ -340,12 +340,6 @@ diphenylmethane,ideal gas isobaric heat capacity,107,298.15,1500,113530,467890,1
 diphenylmethane,liquid isobaric heat capacity,100,200,400,1,1,1,1,1
 diphenylmethane,heat of vaporization,106,242.67,772,81784000,0.41679,0,0,0
 diphenylmethane,second viral coefficients,104,200,500,1,1,1,1,1
-dummy,,105,,,,,,,
-,,,,,,,,,
-,,,,,,,,,
-,,,,,,,,,
-,,,,,,,,,
-,,,,,,,,,
 ethane,vapour pressure,101,90.35,305.32,51.857,-2598.7,-5.1283,1.49E-05,2
 ethane,liquid density,105,90.35,305.32,1.9122,0.27937,305.32,0.29187,
 ethane,ideal gas isobaric heat capacity,107,298.15,1500,44256,84737,872.24,67130,2430.4
@@ -686,5 +680,5 @@ water,vapour pressure,101,273.16,647.096,73.649,-7258.2,-7.3037,4.17E-06,2
 water,liquid density,116,273.16,647.096,17.863,58.606,-95.396,213.89,-141.26
 water,ideal gas isobaric heat capacity,107,100,2273.15,33363,26790,2610.5,8896,1169
 water,liquid isobaric heat capacity,100,273.16,533.15,276370,-2090.1,8.125,-0.014116,9.37E-06
-water,heat of vaporization,106,273.16,647.096,51546000,0.28402,-0.15843,0.2375,
+water,heat of vaporization,106,273.16,647.096,51546000,0.28402,-0.15843,0.2375,0
 water,second viral coefficients,104,273.15,2273.1,0.02222,-26.38,-16750000,-3.89E+19,3.13321

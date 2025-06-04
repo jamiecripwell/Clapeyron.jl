@@ -176,10 +176,14 @@ function DIPPR_calc(comp::String, T::Vector{Float64}, property::String, properti
     end
 end
 
+function DIPPR_calc(component::String, T::Float64, property::String)
+    DIPPR_calc(component, [T], property)  # Wrap T in a vector and call the original function
+end
+
 
 # Test the function
 # DIPPR_calc("74-82-8",298.,"VP")
-LDN, DIPPR_props = DIPPR_calc("methanol",[298.,303.],"LDN")
-println(LDN)
-println(DIPPR_props)
+# LDN, DIPPR_props = DIPPR_calc("methanol",[298.,303.],"LDN")
+# println(LDN)
+# println(DIPPR_props)
 # print([Psat, rholiq, Hvap, ig_cp, l_cp])
