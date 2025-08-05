@@ -36,6 +36,8 @@ function DIPPR_const_props(comp::String)
     for const_prop ∈ ["MW","TC","PC","VC","MP","HFUS","ACEN","DM"]
         # Find the row corresponding to the ChemID and property
         const_row = const_values_sheet[(const_values_sheet[:, "ChemID"] .== chem_id) .& (const_values_sheet[:, "PropertyID"] .== const_prop), :]
+        # Remove rows where "Const_Value" is missing for any property
+        const_row = const_row[.!ismissing.(const_row[:, "Const_Value"]), :]
         if nrow(const_row) == 0
             # If no matching rows are found, set the property value to NaN
             properties_dict[const_prop] = NaN
@@ -184,6 +186,8 @@ end
 # Test the function
 # DIPPR_calc("74-82-8",298.,"VP")
 # LDN, DIPPR_props = DIPPR_calc("methanol",[298.,303.],"LDN")
-# println(LDN)
+# nicotinic_acid_props = DIPPR_const_props("59-67-6")
+# println(nicotinic_acid_props)
+# # println(LDN)
 # println(DIPPR_props)
 # print([Psat, rholiq, Hvap, ig_cp, l_cp])
