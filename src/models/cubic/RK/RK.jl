@@ -32,14 +32,14 @@ export RK
 ## Input parameters
 - `Tc`: Single Parameter (`Float64`) - Critical Temperature `[K]`
 - `Pc`: Single Parameter (`Float64`) - Critical Pressure `[Pa]`
-- `Mw`: Single Parameter (`Float64`) - Molecular Weight `[g/mol]`
+- `Mw`: Single Parameter (`Float64`) - Molecular Weight `[g·mol⁻¹]`
 - `k`: Pair Parameter (`Float64`) (optional)
 - `l`: Pair Parameter (`Float64`) (optional)
 
 ## Model Parameters
 - `Tc`: Single Parameter (`Float64`) - Critical Temperature `[K]`
 - `Pc`: Single Parameter (`Float64`) - Critical Pressure `[Pa]`
-- `Mw`: Single Parameter (`Float64`) - Molecular Weight `[g/mol]`
+- `Mw`: Single Parameter (`Float64`) - Molecular Weight `[g·mol⁻¹]`
 - `a`: Pair Parameter (`Float64`)
 - `b`: Pair Parameter (`Float64`)
 
@@ -113,7 +113,7 @@ function RK(components;
     params = getparams(formatted_components, ["properties/critical.csv", "properties/molarmass.csv","SAFT/PCSAFT/PCSAFT_unlike.csv"];
         userlocations = userlocations,
         verbose = verbose,
-        ignore_missing_singleparams = __ignored_crit_params(alpha))
+        ignore_missing_singleparams = ["Vc","acentricfactor"])
 
     model = CubicModel(RK,params,formatted_components;
                         idealmodel,alpha,mixing,activity,translation,
@@ -128,17 +128,9 @@ end
 
 default_references(::Type{RK}) = ["10.1021/cr60137a013"]
 
-function ab_consts(::Type{<:RKModel})
-    Ωa = 1/(9*(2^(1/3)-1))
-    Ωb = (2^(1/3)-1)/3
-    return Ωa,Ωb
-end
-
-function cubic_Δ(model::RKModel,z)
+@inline function cubic_Δ(::Type{<:RKModel})
     return (0.0,-1.0)
 end
-
-crit_pure(model::RKModel) = crit_pure_tp(model)
 
 const RK_p = Solvers.ChebyshevRange{NTuple{7, Float64}, NTuple{6, Vector{Float64}}}(
     (0.020267685653535945,0.02596797224359293,0.03166825883364991,0.04306883201376388,0.06586997837399182,0.1114722710944477,0.20267685653535944),

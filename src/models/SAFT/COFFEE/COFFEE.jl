@@ -29,20 +29,20 @@ default_ignore_missing_singleparams(::Type{COFFEE}) = ["dipole"]
     assoc_options = AssocOptions())
 
 ## Input parameters
-- `Mw`: Single Parameter (`Float64`) - Molecular Weight `[g/mol]`
+- `Mw`: Single Parameter (`Float64`) - Molecular Weight `[g·mol⁻¹]`
 - `segment`: Single Parameter (`Float64`) - Number of segments (no units)
-- `sigma`: Single Parameter (`Float64`) - Segment Diameter [`A°`]
-- `epsilon`: Single Parameter (`Float64`) - Reduced dispersion energy  `[K]`
-- `k`: Pair Parameter (`Float64`) (optional) - Binary Interaction Paramater (no units)
+- `sigma`: Single Parameter (`Float64`) - Segment Diameter `[Å]`
+- `epsilon`: Single Parameter (`Float64`) - Reduced dispersion energy `[K]`
+- `k`: Pair Parameter (`Float64`) (optional) - Binary Interaction Parameter (no units)
 - `epsilon_assoc`: Association Parameter (`Float64`) - Reduced association energy `[K]`
-- `bondvol`: Association Parameter (`Float64`) - Association Volume `[m^3]`
+- `bondvol`: Association Parameter (`Float64`) - Association Volume `[m³]`
 ## Model Parameters
-- `Mw`: Single Parameter (`Float64`) - Molecular Weight `[g/mol]`
+- `Mw`: Single Parameter (`Float64`) - Molecular Weight `[g·mol⁻¹]`
 - `segment`: Single Parameter (`Float64`) - Number of segments (no units)
 - `sigma`: Pair Parameter (`Float64`) - Mixed segment Diameter `[m]`
 - `epsilon`: Pair Parameter (`Float64`) - Mixed reduced dispersion energy`[K]`
 - `epsilon_assoc`: Association Parameter (`Float64`) - Reduced association energy `[K]`
-- `bondvol`: Association Parameter (`Float64`) - Association Volume
+- `bondvol`: Association Parameter (`Float64`) - Association Volume `[m³]`
 ## Input models
 - `idealmodel`: Ideal Model
 ## Description
@@ -275,6 +275,7 @@ function ∫∫∫dξ₁dξ₂dγ12(I::Function)
     return _I
 end
 
+#=
 function Xij(model::COFFEEModel, V, T, z, _data=@f(data))
     nc = length(model)
     Χᵢⱼ = similar(Base.promote_eltype(model,V,T,z),nc,nc)
@@ -371,7 +372,7 @@ function COFFEE_ξᵢⱼ(z,σ,i,j)
     end
     return ∑1/∑2
 end
-
+=#
 const COFFEEconsts = (
     corr_I = (1.4713,-0.7842,0.6010,1.2336,-0.6978,-1.6837,0.4262,-0.4824,0.3502,0.2707),
 

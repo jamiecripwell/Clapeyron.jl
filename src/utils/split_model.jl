@@ -43,6 +43,8 @@ function each_split_model(param::UnitRange{Int},I)
     return 1:length(I)
 end
 
+each_split_model(param::ReferenceState,group,I_component,I_group) = each_split_model(param,I_component)
+
 function each_split_model(param::ReferenceState,I)
     sym = param.std_type
     if length(param.a1) == 0
@@ -62,23 +64,6 @@ function each_split_model(y::SparseMatrixCSC{<:AbstractVector},I)
     x = y[I,I]
     m,n,colptr,rowval,nzval = x.m,x.n,x.colptr,x.rowval,x.nzval
     return SparseMatrixCSC(m,n,colptr,rowval,nzval)
-end
-
-function each_split_model(y::SparsePackedMofV,I)
-    idx = y.idx[I,I]
-    if iszero(length(y.storage))
-        return SparsePackedMofV(y.storage,idx)
-    end
-
-    if iszero(nnz(idx))
-        st = y.storage
-        storage = PackedVofV([1],zeros(eltype(st.v),0))
-        return SparsePackedMofV(storage,idx)
-    else
-        str = y.storage[nnz(idx)]
-        storage = PackedVectorsOfVectors.pack(str)
-        return SparsePackedMofV(storage,idx)
-    end
 end
 
 function each_split_model(param::PackedVofV,I)
@@ -160,11 +145,16 @@ end
 
 function each_split_model(param::AssocParam,I)
     _value  = each_split_model(param.values,I)
+    if param.sites === nothing
+        sites_i = nothing
+    else
+        sites_i = param.sites[I]
+    end
     return AssocParam(
             param.name,
             param.components[I],
             _value,
-            param.sites[I],
+            sites_i,
             param.sourcecsvs,
             param.sources
             )
@@ -284,7 +274,7 @@ function each_split_model(param::SiteParam,group,Ic,Ig)
         __each_split_model_ambiguous_comps("sites",SiteParam)
     end
 
-    if group != nothing && site.site_translator != nothing && I == Ic
+    if group != nothing && site.site_translator != nothing
         ng = length(group.flattenedgroups)
         recalculate_site_translator!(site,Ig,ng)
     end
@@ -328,6 +318,10 @@ end
 function each_split_model(model::EoSModel,I)
     if !is_splittable(model)
         return model
+    end
+
+    if I isa AbstractVector{Bool}
+        return each_split_model(model,findall(I))
     end
     if has_groups(model)
         Ic = I

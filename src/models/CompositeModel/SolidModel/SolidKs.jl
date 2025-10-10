@@ -1,4 +1,4 @@
-abstract type SolidKsModel <: EoSModel end
+abstract type SolidKsModel <: GibbsBasedModel end
 
 struct SolidKsParam <: EoSParam
     Gform::SingleParam{Float64}
@@ -17,13 +17,13 @@ end
 
 ## Parameters
 
-- `Hfus`: Single Parameter (`Float64`) - Enthalpy of Fusion at 1 bar `[J/mol]`
-- `Tm`: Single Parameter (`Float64`) - Melting Temperature `[K]`
-- `CpSL`: Single Parameter (`Float64`) - Heat Capacity of the Solid-Liquid Phase Transition `[J/mol/K]`
+- `Gform`: Single Parameter (`Float64`) - Formation Gibbs energy in water at infinite dilution 1 bar and the reference temperature`[J·mol⁻¹]`
+- `Hform`: Single Parameter (`Float64`) -Formation enthalpy in water at infinite dilution 1 bar and the reference temperature`[J·mol⁻¹]`
+- `Tref`: Single Parameter (`Float64`) - Reference temperature `[K]`
 
 ## Description
 
-Approximation of the excess chemical potential in the solid phase, using enthalpies and gibbs energies of formation:
+Approximation of the excess chemical potential in the solid phase, using enthalpies and gibbs energies of formation where the liquid reference is at infinite dilution in water:
 ```
 ln(xᵢγᵢ) = -Gformᵢ*T/Trefᵢ - Hformᵢ*(1 - T/Trefᵢ)
 ```
@@ -38,11 +38,24 @@ function volume_impl(model::SolidKsModel,p,T,z,phase,threaded,vol0)
     return _0/_0
 end
 
-function chemical_potential(model::SolidKsModel, p, T, z)
+function chemical_potential_impl(model::SolidKsModel,p,T,z,phase,threaded,vol0)
     Gform = model.params.Gform.values
     Hform = model.params.Hform.values
     Tref = model.params.Tref.values
     return @. -Gform*T/Tref - Hform*(1 - T/Tref)
+end
+
+function eos_g(model::SolidKsModel,p,T,z)
+    Gform = model.params.Gform.values
+    Hform = model.params.Hform.values
+    Tref = model.params.Tref.values
+    g = zero(Base.promote_eltype(model,T,z))
+    for i in 1:length(model)
+        Trefi = Tref[i]
+        μi = -Gform[i]*T/Trefi - Hform[i]*(1 - T/Trefi)
+        g += z[i]*μi
+    end
+    return g
 end
 
 export SolidKs
@@ -50,7 +63,7 @@ export SolidKs
 """
     sle_solubility(model::CompositeModel, p, T, z; solute)
 
-Calculates the solubility of each component within a solution of the other components, at a given temperature and composition.
+Calculates the solubility of each component within a solution of the other components, at a given temperature `T` and composition `z`.
 Returns a matrix containing the composition of the SLE phase boundary for each component. If `solute` is specified, returns only the solubility of the specified component.
 
 Can only function when solid and fluid models are specified within a CompositeModel.
@@ -95,9 +108,9 @@ function sle_solubility(model::CompositeModel{F,S},p,T,z;solute=nothing,x0=nothi
         if isnothing(x0)
             x0 = x0_sle_solubility(model,p,T,z,idx_solv,idx_sol_l,ν_l,μsol)
         end
-        f!(F,x) = obj_sle_solubility(F,model,p,T,z[idx_solv],exp10(x[1]),idx_sol_l,idx_sol_s,idx_solv,ν_l)
+        f!(F,x) = obj_sle_solubility(F,model,p,T,z,exp10(x[1]),idx_sol_l,idx_sol_s,idx_solv,ν_l)
         results = Solvers.nlsolve(f!,x0,LineSearch(Newton()),NEqOptions(f_abstol=1e-6,f_reltol=1e-8),ForwardDiff.Chunk{1}())
-        sol[i,.!(idx_solv)] .= exp10(Solvers.x_sol(results)[1])
+        sol[i,.!(idx_solv)] .= exp10(Solvers.x_sol(results)[1]).*ν_l
         sol[i,idx_solv] = z[idx_solv]
         sol[i,:] ./= sum(sol[i,:])
     end
@@ -109,24 +122,28 @@ function sle_solubility(model::CompositeModel{F,S},p,T,z;solute=nothing,x0=nothi
 end
 
 function obj_sle_solubility(F,model::CompositeModel{L,S},p,T,zsolv,solu,idx_sol_l,idx_sol_s,idx_solv,ν_l) where L <: EoSModel where S <: SolidKsModel
-
     z = zeros(typeof(solu),length(model.fluid))
-    z[.!(idx_solv)] .= solu
-    z[idx_solv] .= zsolv
+    z[.!(idx_solv)] .= solu.*ν_l
+    z[idx_solv] .= zsolv[idx_solv]
     z ./= sum(z)
 
     if typeof(model.fluid) <: ESElectrolyteModel
-        φ = fugacity_coefficient(model.fluid,p,T,z)
-        zref = zeros(length(model.fluid))
-        ineutral = model.fluid.charge .== 0
+        v = volume(model.fluid,p,T,z)
+        μ = VT_chemical_potential_res(model.fluid,v,T,z) .- Rgas()*T*log(v*p/(Rgas()*T*sum(z))) + Rgas()  * T * log.(z)
+        
+        zref = ones(length(model.fluid))*1e-30
+        idx_water = find_water_indx(model.fluid)
+        zref[idx_water] = 1.0
+        # zref = zeros(length(model.fluid))
 
-        zref[.!(ineutral)] .= 1e-30
-        zref[ineutral] .= 1.
+        # ineutral = model.fluid.charge .== 0
+        # zref[.!(ineutral)] .= 1e-30
+        # zref[ineutral] .= zsolv[ineutral]
         zref ./= sum(zref)
-        φref = fugacity_coefficient(model.fluid,p,T,zref)
+        vref = volume(model.fluid,p,T,zref)
+        μref = VT_chemical_potential_res(model.fluid,vref,T,zref) .- Rgas()*T*log(vref*p/(Rgas()*T*sum(zref)))
 
-        γ = φ./φref
-        μliq = Rgas()*T*log.(γ[idx_sol_l].*z[idx_sol_l])
+        μliq = (μ - μref)[idx_sol_l]
     else
         pure   = split_pure_model(model.fluid)
         μ_mixt = chemical_potential(model.fluid, p, T, z)
@@ -138,8 +155,7 @@ function obj_sle_solubility(F,model::CompositeModel{L,S},p,T,zsolv,solu,idx_sol_
     μsol = chemical_potential(solid_r,p,T,[1.])
 
     μliq = sum(μliq.*ν_l)
-    # println(μliq)
-    F[1] = μliq - μsol[1]
+    F[1] = (μliq - μsol[1])/(Rgas()*T)
     return F
 end
 

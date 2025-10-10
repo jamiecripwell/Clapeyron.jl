@@ -1,11 +1,3 @@
-#struct for testset "#161"
-struct PCSAFT161 <: Clapeyron.PCSAFTModel
-    components::Vector{String}
-    params::Clapeyron.PCSAFTParam
-    references::Vector{String}
-    weird_thing::Int
-end
-
 @testset "misc" begin
     @printline
     model2 = PCSAFT(["water","ethanol"])
@@ -60,6 +52,30 @@ end
         model0 = SAFTgammaMie(["ethane"])
         model0_split = SAFTgammaMie(["methane","ethane"]) |> split_model |> last
         @test model0.params.epsilon.values[1,1] == model0_split.params.epsilon.values[1,1]
+
+        #error on spliting assoc models without sites
+        model_nosites = PCSAFT(["a"],userlocations = (Mw = 1.0,segment = 1.0,sigma = 1.0,epsilon = 1.0))
+        @test split_model(model_nosites)[1] isa PCSAFT 
+        
+        #error on splitting models with ReferenceState
+        model_reference_state = JobackIdeal(["propane","hexane"])
+        @test split_model(model_reference_state)[1] isa JobackIdeal
+
+        #index reduction testing
+        #https://discourse.julialang.org/t/mtk-solve-weird-error-message/131638
+        model_idx = PCSAFT(["ethane","propane","methane"])
+        @test length(Clapeyron.index_reduction(model_idx,[1.,0.,0.])[1]) == 1
+        @test length(Clapeyron.index_reduction(model_idx,[1.,0.,1.])[1]) == 2
+        @test length(Clapeyron.index_reduction(model_idx,[1.,1.,1.])[1]) == 3
+        @test length(Clapeyron.index_reduction(model_idx,[1.,-5e-16,1.])[1]) == 2
+        @test_throws ErrorException Clapeyron.index_reduction(model_idx,[0.,-5e-16,0.])
+        @test_throws ErrorException Clapeyron.index_reduction(model_idx,[0.,0.0,0.])
+        @test_throws BoundsError Clapeyron.index_reduction(model_idx,[0.,-5e-16,0.,0.0])
+        @test_throws BoundsError Clapeyron.index_reduction(model_idx,[0.,-5e-16])
+        @test_throws BoundsError Clapeyron.index_reduction(model_idx,[true,true])
+        @test_throws BoundsError Clapeyron.index_reduction(model_idx,[true,true,true,true])
+        @test_throws ErrorException Clapeyron.index_reduction(model_idx,[false,false,false])
+        @test_throws ErrorException Clapeyron.index_reduction(model_idx,[0.,0.0,0.])
     end
 
     @testset "export_model" begin
@@ -122,13 +138,6 @@ end
         @test Clapeyron.@f(f_eos,pi) == 2+pi
         @test Clapeyron.@nan(Base.log(-1),3) == 3
         @test_throws MethodError Clapeyron.@nan(Base.log("s"),3)
-
-        #problems with registermodel
-        Clapeyron.@registermodel PCSAFT161
-        @test hasmethod(Base.length,Tuple{PCSAFT161})
-        @test hasmethod(Base.show,Tuple{IO,PCSAFT161})
-        @test hasmethod(Base.show,Tuple{IO,MIME"text/plain",PCSAFT161})
-        @test hasmethod(Clapeyron.molecular_weight,Tuple{PCSAFT161,Array{Float64}})
     end
 
     

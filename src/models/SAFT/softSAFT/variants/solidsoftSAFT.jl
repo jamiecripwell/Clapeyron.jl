@@ -9,6 +9,7 @@ abstract type solidsoftSAFTModel <: softSAFTModel end
 @newmodel solidsoftSAFT solidsoftSAFTModel solidsoftSAFTParam
 default_references(::Type{solidsoftSAFT}) = ["10.1080/002689797170707","10.1080/00268979300100411","10.1080/00268976.2023.2204150"]
 default_locations(::Type{solidsoftSAFT}) = ["SAFT/softSAFT/solidsoftSAFT","properties/molarmass.csv"]
+
 function transform_params(::Type{solidsoftSAFT},params)
     sigma = params["sigma"]
     sigma.values .*= 1E-10
@@ -27,21 +28,21 @@ end
     assoc_options = AssocOptions())
 
 ## Input parameters
-- `Mw`: Single Parameter (`Float64`) - Molecular Weight `[g/mol]`
+- `Mw`: Single Parameter (`Float64`) - Molecular Weight `[g·mol⁻¹]`
 - `segment`: Single Parameter (`Float64`) - Number of segments (no units)
-- `sigma`: Single Parameter (`Float64`) - Segment Diameter [`A°`]
-- `epsilon`: Single Parameter (`Float64`) - Reduced dispersion energy  `[K]`
-- `k`: Pair Parameter (`Float64`) (optional) - Binary Interaction Paramater (no units)
+- `sigma`: Single Parameter (`Float64`) - Segment Diameter `[Å]`
+- `epsilon`: Single Parameter (`Float64`) - Reduced dispersion energy `[K]`
+- `k`: Pair Parameter (`Float64`) (optional) - Binary Interaction Parameter (no units)
 - `epsilon_assoc`: Association Parameter (`Float64`) - Reduced association energy `[K]`
-- `bondvol`: Association Parameter (`Float64`) - Association Volume `[m^3]`
+- `bondvol`: Association Parameter (`Float64`) - Association Volume `[m³]`
 
 ## Model Parameters
-- `Mw`: Single Parameter (`Float64`) - Molecular Weight `[g/mol]`
+- `Mw`: Single Parameter (`Float64`) - Molecular Weight `[g·mol⁻¹]`
 - `segment`: Single Parameter (`Float64`) - Number of segments (no units)
 - `sigma`: Pair Parameter (`Float64`) - Mixed segment Diameter `[m]`
 - `epsilon`: Pair Parameter (`Float64`) - Mixed reduced dispersion energy`[K]`
 - `epsilon_assoc`: Association Parameter (`Float64`) - Reduced association energy `[K]`
-- `bondvol`: Association Parameter (`Float64`) - Association Volume
+- `bondvol`: Association Parameter (`Float64`) - Association Volume `[m³]`
 
 ## Input models
 - `idealmodel`: Ideal Model
@@ -51,7 +52,7 @@ end
 Soft SAFT equation of state for the solid phase.
 
 ## References
-1. Johnson, J. K., Zollweg, J. A., & Gubbins, K. E. (1993). Modelling the solid–liquid–vapour phase behaviour ofn-alkanes in a TPT-1framework. Molecular physics, 78(3), 591–618. [doi:10.1080/00268979300100411](https://doi.org/10.1080/00268979300100411)
+1. Johnson, J. K., Zollweg, J. A., & Gubbins, K. E. (1993). The Lennard-Jones equation of state revisited. Molecular physics, 78(3), 591–618. [doi:10.1080/00268979300100411](https://doi.org/10.1080/00268979300100411)
 1. FELIPE J. BLAS and LOURDES F. VEGA. (1997). Thermodynamic behaviour of homonuclear and heteronuclear Lennard-Jones chains with association sites from simulation and theory. Molecular physics, 92(1), 135–150. [doi:10.1080/002689797170707](https://doi.org/10.1080/002689797170707)
 3. Ramírez-Carpio, V., Galindo, A., & Gil-Villegas, A. (2023). Modelling the solid–liquid–vapour phase behaviour of n -alkanes in a TPT-1 framework. Molecular Physics, 121(19–20). [doi:10.1080/00268976.2023.2204150](https://doi.org/10.1080/00268976.2023.2204150)
 """
@@ -91,22 +92,6 @@ function a_LJ(model::solidsoftSAFTModel, V, T, z,_data = @f(data))
     B = sum(b[n]/n*ρ̄^n for n ∈ 1:4)
     return m̄*(-23.3450759+ustat/T̄+Uah-3/2*log(T̄)+B)
 end
-
-function ϵ_m(model::solidsoftSAFTModel, V, T, z)
-    comps = @comps
-    ϵ = model.params.epsilon.values
-    σ = model.params.sigma.values
-    m = model.params.segment.values
-    return sum(m[i]*m[j]*z[i]*z[j]*σ[i,j]^3*ϵ[i,j] for i ∈ comps for j ∈ comps)/sum(m[i]*m[j]*z[i]*z[j]*σ[i,j]^3 for i ∈ comps for j ∈ comps)
-end
-
-function σ_m(model::solidsoftSAFTModel, V, T, z)
-    comps = @comps
-    σ = model.params.sigma.values
-    m = model.params.segment.values
-    return (sum(m[i]*m[j]*z[i]*z[j]*σ[i,j]^3 for i ∈ comps for j ∈ comps)/sum(m[i]*m[j]*z[i]*z[j] for i ∈ comps for j ∈ comps))^(1/3)
-end
-
 
 function a_chain(model::solidsoftSAFTModel, V, T, z,_data = @f(data))
     σ3,ϵ̄,m̄,ρ̄  = _data

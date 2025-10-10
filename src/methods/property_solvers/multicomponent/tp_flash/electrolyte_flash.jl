@@ -1,12 +1,23 @@
-function tp_flash_michelsen(model::ElectrolyteModel, p, T, z; equilibrium=:vle, K0=nothing,
-                                     x0=nothing, y0=nothing, vol0=(nothing, nothing),
-                                     K_tol=1e-12, itss=21, nacc=5, second_order=false, use_opt_solver = true,
-                                     non_inx_list=nothing, non_iny_list=nothing, reduced=false)
+function tp_flash_michelsen(model::ElectrolyteModel, p, T, z, method = MichelsenTPFlash(),reduced = false)
 
+    equilibrium = method.equilibrium
+    K0 = method.K0
+    x0 = method.x0
+    y0 = method.y0
+    vol0 = method.v0
+    K_tol = method.K_tol
+    itss = michelsen_itss(method)
+    nacc = method.nacc
+    second_order = hasfield(typeof(method),:second_order) ? method.second_order : false
+    use_opt_solver = michelsen_use_opt_solver(method)
+    verbose = method.verbose
+    non_inx_list = method.noncondensables
+    non_iny_list = method.nonvolatiles
 
     Z = model.charge
-    ions = model.components[Z.!=0]
-    
+    model_components = component_list(model)
+    ions = model_components[Z.!=0]
+
     if !reduced
         model_full,z_full = model,z
         model,z_nonzero = index_reduction(model_full,z_full)
@@ -30,7 +41,7 @@ function tp_flash_michelsen(model::ElectrolyteModel, p, T, z; equilibrium=:vle, 
     non_iny = fill(false,nc)
 
     for i in 1:nc
-        component = model.components[i]
+        component = model_components[i]
         non_inx[i] = !isnothing(non_inx_list) && (component in non_inx_list) && true
         non_iny[i] = !isnothing(non_iny_list) && (component in non_iny_list) && true
     end
@@ -40,51 +51,60 @@ function tp_flash_michelsen(model::ElectrolyteModel, p, T, z; equilibrium=:vle, 
 
     # components that are allowed to be in two phases
     in_equilibria = @. !non_inx & !non_iny
+
     # Computing the initial guess for the K vector
-    x = similar(z)
-    y = similar(z)
+    x = similar(z,Base.promote_eltype(model,p,T,z))
+    y = similar(z,Base.promote_eltype(model,p,T,z))
+    x .= z
+    y .= z
+    K,lnK = similar(x),similar(x)
     dlnϕ_cache = ∂lnϕ_cache(model, p, T, x, Val{false}())
     if !isnothing(K0)
-        K = 1. * K0
-        lnK = log.(K)
+        K .= 1. * K0
+        lnK .= log.(K)
+        verbose && @info "K0 already provided"
     elseif !isnothing(x0) && !isnothing(y0)
         x = x0 ./ sum(x0)
         y = y0 ./ sum(y0)
-        lnK = log.(y ./ x)
-        lnK,volx,voly,_ = update_K!(lnK,model,p,T,x,y,nothing,(volx,voly),phases,non_inw)
-        K = exp.(lnK)
+        lnK .= log.(y ./ x)
+        lnK,volx,voly,_ = update_K!(lnK,model,p,T,x,y,z,nothing,(volx,voly),phases,non_inw,dlnϕ_cache)
+        K .= exp.(lnK)
+        verbose && @info "x0,y0 provided, calculating K0 via Clapeyron.update_K!"
     elseif is_vle(equilibrium) || is_unknown(equilibrium)
-        # Wilson Correlation for K
-        K = tp_flash_K0(model,p,T)
+        # VLE Correlation for K
+        verbose && @info "K0 calculated via pure VLE correlation"
+        tp_flash_K0!(K,model,p,T,z)
         #if we can't predict K, we use lle
         if is_unknown(equilibrium)
             Kmin,Kmax = extrema(K)
-            
-            if Kmin > 1 || Kmax < 1 
+            if Kmin > 1 || Kmax < 1
+                verbose && @info "VLE correlation falied, trying LLE initial point."
                 K = K0_lle_init(model,p,T,z)
             end
         end
-        lnK = log.(K)
+        lnK .= log.(K)
        # volx,voly = NaN*_1,NaN*_1
     else
-        K = K0_lle_init(model,p,T,z)
-        lnK = log.(K)
+        verbose && @info "K0 calculated via LLE initial point (tpd)"
+        K .= K0_lle_init(model,p,T,z)
+        lnK .= log.(K)
     end
-    _1 = one(p+T+first(z))
+    _1 = one(eltype(K))
     # Initial guess for phase split
-    ψ = 0.
+    ψ = -sum(Z.*lnK)/sum(abs.(Z))
     K̄ = K.*exp.(Z.*ψ)
     β,singlephase,_,_ = rachfordrice_β0(K̄,z,nothing,non_inx,non_iny)
-    
     #=TODO:
     there is a method used in TREND that tries to obtain adequate values of K
     in the case of incorrect initialization.
     =#
     # Stage 1: Successive Substitution
+    verbose && @info "initial vapour fraction = $β"
+    verbose && @info "ψ(K0) = $ψ"
+    verbose && singlephase && @info "initial point is single-phase (does not satisfy Rachford-Rice constraints). Exiting early"
     error_lnK = _1
     it = 0
     itacc = 0
-    
     if nacc != 0
         lnK3,lnK4,lnK5,K_dem,lnK_dem,ΔlnK1,ΔlnK2,K̄_dem = similar(lnK),similar(lnK),similar(lnK),similar(lnK),similar(lnK),similar(lnK),similar(lnK),similar(lnK)
         x_dem,y_dem = similar(x),similar(y)
@@ -93,20 +113,20 @@ function tp_flash_michelsen(model::ElectrolyteModel, p, T, z; equilibrium=:vle, 
         x_dem,y_dem = x,y
     end
 
-    lnK_old = similar(lnK)
+    lnK̄_old = similar(lnK)
     gibbs = one(_1)
     gibbs_dem = one(_1)
     vcache = Ref((_1, _1))
+
     while error_lnK > K_tol && it < itss && !singlephase
         it += 1
         itacc += 1
-        lnK_old .= lnK .* _1
-        β,ψ = rachfordrice(K, z, Z; β0=β, ψ0=ψ, non_inx=non_inx, non_iny=non_iny)
-        singlephase = !(0 < β < 1) #rachford rice returns 0 or 1 if it is single phase.
-        K̄ .= K.*exp.(Z.*ψ)
+        lnK̄_old .= lnK + Z.*ψ
         x,y = update_rr!(K̄,β,z,x,y,non_inx,non_iny)
         # Updating K's
-        lnK,volx,voly,gibbs = update_K!(lnK,model,p,T,x,y,β,(volx,voly),phases,non_inw,dlnϕ_cache)
+        lnK,volx,voly,gibbs = update_K!(lnK,model,p,T,x,y,z,β,(volx,voly),phases,non_inw,dlnϕ_cache)
+
+        gibbs +=  β*ψ*dot(x,Z)
         vcache[] = (volx,voly)
         # acceleration step
         if itacc == (nacc - 2)
@@ -120,11 +140,12 @@ function tp_flash_michelsen(model::ElectrolyteModel, p, T, z; equilibrium=:vle, 
             lnK_dem = dem!(lnK_dem, lnK5, lnK4, lnK3,(ΔlnK1,ΔlnK2))
             K_dem .= exp.(lnK_dem)
             β_dem,ψ_dem = rachfordrice(K_dem, z, Z; β0=β, ψ0=ψ, non_inx=non_inx, non_iny=non_iny)
-            K̄ .= K_dem.*exp.(Z.*ψ_dem)
-            K̄_dem .= K̄
+            K̄_dem .= K_dem .* exp.(Z .* ψ_dem)
             x_dem,y_dem = update_rr!(K̄_dem,β_dem,z,x_dem,y_dem,non_inx,non_iny)
-            lnK_dem,volx_dem,voly_dem,gibbs_dem = update_K!(lnK_dem,model,p,T,x_dem,y_dem,β,(volx,voly),phases,non_inw,dlnϕ_cache)
-            # only accelerate if the gibbs free energy is reduced
+            lnK_dem,volx_dem,voly_dem,gibbs_dem = update_K!(lnK_dem,model,p,T,x_dem,y_dem,z,β_dem,(volx,voly),phases,non_inw,dlnϕ_cache)
+            #add effect of electroneutrality condition on Gibbs energy
+            gibbs_dem += β_dem*ψ_dem*dot(x_dem,Z)
+            # only accelerate if the Gibbs energy is reduced
             if gibbs_dem < gibbs
                 lnK .= lnK_dem
                 volx = _1 * volx_dem
@@ -135,13 +156,19 @@ function tp_flash_michelsen(model::ElectrolyteModel, p, T, z; equilibrium=:vle, 
             end
         end
         K .= exp.(lnK)
+        verbose && it > 0 && @info "$itss SS iterations done, error(lnK) = $error_lnK"
 
+        β,ψ = rachfordrice(K, z, Z; β0=β, ψ0=ψ, non_inx=non_inx, non_iny=non_iny)
+        lnK̄ = lnK + Z.*ψ
+        # println(ψ)
+        singlephase = !(0 < β < 1) #rachford rice returns 0 or 1 if it is single phase.
         # Computing error
         # error_lnK = sum((lnK .- lnK_old).^2)
-        dnorm(@view(lnK[in_equilibria]),@view(lnK_old[in_equilibria]),1)
+        error_lnK = dnorm(@view(lnK̄[in_equilibria]),@view(lnK̄_old[in_equilibria]),1)
+        # println(error_lnK)
     end
-
     if error_lnK > K_tol && it == itss && !singlephase && use_opt_solver
+        verbose && @info "$it error(lnK) > $K_tol, solving via non-linear system"
         nx = zeros(nc)
         ny = zeros(nc)
 
@@ -176,20 +203,28 @@ function tp_flash_michelsen(model::ElectrolyteModel, p, T, z; equilibrium=:vle, 
         x .= nx ./ nxsum
         y .= ny ./ nysum
         β = sum(ny)
-
     end
     K .= y ./ x
-    K̄ .= K.*exp.(Z.*ψ)
+    verbose && @info "final K values: $K"
+    β = ((z.-x)./(y.-x))[1]
+    verbose && @info "final vapour fraction: $β"
     #convergence checks (TODO, seems to fail with activity models)
-    _,singlephase,_,_ = rachfordrice_β0(K̄,z,β,non_inx,non_iny)
+    _,singlephase,_,_ = rachfordrice_β0(K,z,β,non_inx,non_iny)
+    verbose && singlephase && @info "result is single-phase (does not satisfy Rachford-Rice constraints)."
+
     vx,vy = vcache[]
     #@show vx,vy
     #maybe azeotrope, do nothing in this case
     if abs(vx - vy) > sqrt(max(abs(vx),abs(vy))) && singlephase
+        verbose && @info "trivial result but different volumes (maybe azeotrope?)"
         singlephase = false
+    elseif !material_balance_rr_converged((x,y),z,β) #material balance failed
+        verbose && @info "material balance failed."
+        singlephase = true
     elseif any(isnan,view(K,in_equilibria)) || isnan(ψ)
         singlephase = true
     end
+
     if singlephase
         β = zero(β)/zero(β)
         x .= z
@@ -207,20 +242,30 @@ function rachfordrice(K, z, Z; β0=nothing, ψ0=nothing, non_inx=FillArrays.Fill
     # Function to solve Rachdord-Rice mass balance
     β,singlephase,limits,_ = rachfordrice_β0(K.*exp.(Z.*ψ0),z,β0,non_inx,non_iny)
     if !singlephase
-        function rachford_rice_donnan(F,x,K,z,Z)
+        function rachford_rice_donnan(x,K,z,Z)
             β = x[1]
             ψ = x[2]
-            F[1] = sum((z.*(1 .-K.*exp.(Z*ψ)))./(1 .+β*(K.*exp.(Z*ψ).-1)))
-            F[2] = sum((z.*Z./(1 .+β*(K.*exp.(Z*ψ).-1))))
+            F1 = zero(Base.promote_eltype(K,z))
+            F2 = zero(Base.promote_eltype(K,z))
+            for i in 1:length(Z)
+                Zi,zi = Z[i],z[i]
+                K̄i =  K[i]*exp(Zi*ψ)
+                F1 += zi*(1 - K̄i)/(1 + β*(K̄i - 1)) #rachford rice
+                if Zi != 0
+                    F2 += zi*Zi/(1 + β*(K̄i - 1)) #electroneutrality of phase x
+                end
+            end
+            return SVector((F1,F2))
         end
-        f!(F,x) = rachford_rice_donnan(F,x,K,z,Z)
-        results = Solvers.nlsolve(f!,[β0,ψ0],TrustRegion(Newton(), Dogleg()))
+        x0 = SVector(Base.promote(β0,ψ0))
+        ff(F,x) = rachford_rice_donnan(x,K,z,Z)
+        results = Solvers.nlsolve(ff,x0)
         sol = Clapeyron.Solvers.x_sol(results)
         β = sol[1]
         ψ = sol[2]
-        return β, ψ
+        return SVector(Base.promote(β,ψ))
     else
-        return β, ψ0
+        return SVector(Base.promote(β0,ψ0))
     end
 end
 
@@ -229,8 +274,8 @@ function dgibbs_obj!(model::ElectrolyteModel, p, T, z, phasex, phasey,
     F=nothing, G=nothing, H=nothing)
 
     Z = model.charge
-    # Objetive Function to minimize the Gibbs Free Energy
-    # It computes the Gibbs free energy, its gradient and its hessian
+    # Objetive Function to minimize the Gibbs energy
+    # It computes the Gibbs energy, its gradient and its hessian
     iv = 0
     for i in eachindex(z)
         if in_equilibria[i]
@@ -251,7 +296,7 @@ function dgibbs_obj!(model::ElectrolyteModel, p, T, z, phasex, phasey,
     volx,voly = vcache[]
     all_equilibria = all(in_equilibria)
     if H !== nothing
-        # Computing Gibbs Energy Hessian
+        # Computing Gibbs energy Hessian
         lnϕx, ∂lnϕ∂nx, ∂lnϕ∂Px, volx = ∂lnϕ∂n∂P(model, p, T, x; phase=phasex, vol0=volx)
         lnϕy, ∂lnϕ∂ny, ∂lnϕ∂Py, voly = ∂lnϕ∂n∂P(model, p, T, y; phase=phasey, vol0=voly)
 
@@ -291,7 +336,7 @@ function dgibbs_obj!(model::ElectrolyteModel, p, T, z, phasex, phasey,
     end
 
     if G !== nothing
-        # Computing Gibbs Energy gradient
+        # Computing Gibbs energy gradient
         i0 = 0
         for i in eachindex(in_equilibria)
             if in_equilibria[i]
@@ -303,7 +348,7 @@ function dgibbs_obj!(model::ElectrolyteModel, p, T, z, phasex, phasey,
     end
 
     if F !== nothing
-        # Computing Gibbs Energy
+        # Computing Gibbs energy
         FO = dot(ny,ϕy) + dot(nx,ϕx) + ψ*dot(nx,Z)
         return FO
     end

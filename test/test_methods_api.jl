@@ -59,7 +59,7 @@ end
     model_esd = PCSAFT(["methanol","ethanol"],assoc_options = AssocOptions(combining = :esd))
     model_esd_r = PCSAFT(["methanol","ethanol"],assoc_options = AssocOptions(combining = :elliott_runtime))
     model_dufal = PCSAFT(["methanol","ethanol"],assoc_options = AssocOptions(combining = :dufal))
-
+    test_repr(AssocOptions(combining = :dufal))
     V = 5e-5
     T = 298.15
     z = [0.5,0.5]
@@ -166,7 +166,7 @@ end
         T12,v12,_ = saturation_temperature(pure1[2],101325.0)
         @test Clapeyron.VT_enthalpy(pure1[2],v12,T12) ≈ 0.0 atol = 1e-6
         @test Clapeyron.VT_entropy(pure1[2],v12,T12) ≈ 0.0 atol = 1e-6
-
+        test_repr(Clapeyron.reference_state(model1))
         #test that multifluids work.
         model1b = GERG2008("water",reference_state = :nbp)
         T1b,v1b,_ = saturation_temperature(model1b,101325.0)
@@ -223,6 +223,19 @@ end
         @test Clapeyron.VT_enthalpy(model5,v5,T5,z5) ≈ 123 atol = 1e-6
         @test Clapeyron.VT_entropy(model5,v5,T5,z5) ≈ 456 atol = 1e-6
     end
+
+    #reference state from EoSVectorParam
+    mod_pr = cPR(["water","ethanol"],idealmodel = ReidIdeal,reference_state = :ntp)
+    mod_vec = Clapeyron.EoSVectorParam(mod_pr)
+    Clapeyron.recombine!(mod_vec)
+    @test reference_state(mod_vec).std_type == :ntp
+    @test length(reference_state(mod_vec).a0) == 2
+
+    #reference state from Activity models
+    puremodel = mod_pr = cPR(["water","ethanol"],idealmodel = ReidIdeal)
+    act = NRTL(["water","ethanol"],puremodel = puremodel,reference_state = :ntp)
+    @test reference_state(act).std_type == :ntp
+    @test length(reference_state(act).a0) == 2
 end
 
 @testset "Solid Phase Equilibria" begin
@@ -247,6 +260,32 @@ end
         model2 = CompositeModel("water",solid = SolidHfus, fluid = IAPWS95())
         @test melting_temperature(model2,1e5)[1] ≈ 273.15 rtol = 1e-6
         @test melting_pressure(model2,273.15)[1] ≈ 1e5 rtol = 1e-6
+
+        #solid gibbs + fluid helmholtz
+        model3 = CompositeModel("water", solid = IAPWS06(),fluid = IAPWS95())
+        @test melting_temperature(model3,101325.0)[1] ≈ 273.1525192653753 rtol = 1e-6
+        @test melting_pressure(model3,273.1525192653753)[1] ≈ 101325.0 rtol = 1e-6
+
+        #solid gibbs + fluid gibbs
+        model4 = CompositeModel("water", solid = IAPWS06(),fluid = GrenkeElliottWater())
+        @test melting_temperature(model4,101325.0)[1] ≈ 273.15 rtol = 1e-6
+        @test melting_pressure(model4,273.15)[1] ≈ 101325.0 rtol = 1e-6
+
+        #solid gibbs + any other fluid helmholtz
+        model5 = CompositeModel("water", solid = IAPWS06(),fluid = cPR("water"))
+        @test melting_temperature(model5,101325.0)[1] ≈ 273.15 rtol = 1e-6
+        @test melting_pressure(model5,273.15)[1] ≈ 101325.0 rtol = 1e-6
+
+        #solid gibbs + helmholtz fluid, without any initial points
+        model6 = CompositeModel(["CO2"],solid = JagerSpanSolidCO2(),fluid = SingleFluid("carbon dioxide"))
+        tp6 = triple_point(model6)
+        Ttp6 = tp6[1]
+        ptp6 = tp6[2]
+        @test Ttp6 ≈ model6.fluid.properties.Ttp rtol = 1e-5
+        @test sublimation_pressure(model6,Ttp6)[1] ≈ ptp6 rtol = 1e-6
+        @test sublimation_temperature(model6,ptp6)[1] ≈ Ttp6 rtol = 1e-6
+        @test melting_pressure(model6,Ttp6)[1] ≈ ptp6 rtol = 1e-6
+        @test melting_temperature(model6,ptp6)[1] ≈ Ttp6 rtol = 1e-6
     end
     GC.gc()
     @testset "Mixture Solid-Liquid Equilibria" begin
@@ -349,6 +388,18 @@ end
     (Tv_spin_impl, xv_spin_impl) = spinodal_temperature(model,pv_spin,x_spin;T0=225.,v0=vv_spin)
     @test Tl_spin_impl ≈ T_spin rtol = 1e-6
     @test Tv_spin_impl ≈ T_spin rtol = 1e-6
+
+    #test for #382: pure spinodal at low pressures
+    model2 = PCSAFT("carbon dioxide")
+    Tc,Pc,Vc = (310.27679925044134, 8.06391600653306e6, 9.976420206333288e-5)
+    T = LinRange(Tc-70,Tc-0.1,50)
+    psl = first.(spinodal_pressure.(model2,T,phase = :l))
+    psv = first.(spinodal_pressure.(model2,T,phase = :v))
+    psat = first.(saturation_pressure.(model2,T))
+    @test all(psl .< psat)
+    @test all(psat .< psv)
+    @test issorted(psl)
+    @test issorted(psv)
 end
 
 @testset "supercritical lines" begin

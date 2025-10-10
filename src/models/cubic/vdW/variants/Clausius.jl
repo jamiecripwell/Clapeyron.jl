@@ -31,16 +31,16 @@ end
 ## Input parameters
 - `Tc`: Single Parameter (`Float64`) - Critical Temperature `[K]`
 - `Pc`: Single Parameter (`Float64`) - Critical Pressure `[Pa]`
-- `Vc`: Single Parameter (`Float64`) - Molar Volume `[m^3/mol]`
-- `Mw`: Single Parameter (`Float64`) - Molecular Weight `[g/mol]`
+- `Vc`: Single Parameter (`Float64`) - Molar Volume `[m³·mol⁻¹]`
+- `Mw`: Single Parameter (`Float64`) - Molecular Weight `[g·mol⁻¹]`
 - `k`: Pair Parameter (`Float64`) (optional)
 - `l`: Pair Parameter (`Float64`) (optional)
 
 ## Model Parameters
 - `Tc`: Single Parameter (`Float64`) - Critical Temperature `[K]`
 - `Pc`: Single Parameter (`Float64`) - Critical Pressure `[Pa]`
-- `Vc`: Single Parameter (`Float64`) - Molar Volume `[m^3/mol]`
-- `Mw`: Single Parameter (`Float64`) - Molecular Weight `[g/mol]`
+- `Vc`: Single Parameter (`Float64`) - Molar Volume `[m³·mol⁻¹]`
+- `Mw`: Single Parameter (`Float64`) - Molecular Weight `[g·mol⁻¹]`
 - `a`: Pair Parameter (`Float64`)
 - `b`: Pair Parameter (`Float64`)
 
@@ -133,10 +133,3 @@ function cubic_Δ(model::ClausiusModel,z)
     c̄ = dot(c,z)*z⁻¹
     return (-c̄/b̄,-c̄/b̄)
 end
-
-crit_pure(model::ClausiusModel) = crit_pure_tp(model)
-#=
- (-B2-2(B2+B)+A)
- (-B2-2B2-2B+A)
- (-3B2-2B+A)
-=#

@@ -1,22 +1,23 @@
 """
     pressure(model::EoSModel, V, T, z=SA[1.])
 
-default units: `[Pa]`
+Default units: `[Pa]`
 
-Returns the pressure of the model at a given volume, temperature and composition, defined as:
+Returns the pressure of the model at a given volume `V`, temperature `T` and composition `z`, defined as:
 
 ```julia
 p = -∂A/∂V
 ```
-
+where A is the Helmholtz energy `[J]`,
+V is the volume `[m³]`
 """
 function pressure(model::EoSModel, V, T, z=SA[1.])
-    return -∂f∂V(model,V,T,z)
+    return VT_pressure(model, V, T, z)
 end
 
 function temperature end
 
-VT_pressure(model, V, T, z=SA[1.]) = pressure(model,V,T,z)
+VT_pressure(model, V, T, z=SA[1.]) = -∂f∂V(model,V,T,z)
 VT_temperature(model, V, T, z=SA[1.]) = T
 VT_volume(model, V, T, z=SA[1.]) = V
 
@@ -30,6 +31,9 @@ VT_pressure_res(model, V, T, z=SA[1.]) = pressure_res(model,V,T,z)
 function VT_entropy(model::EoSModel, V, T, z::AbstractVector=SA[1.])
     return -∂f∂T(model,V,T,z)
 end
+
+VT_mass_entropy(model::EoSModel,V, T, z::AbstractVector = SA[1.0]) = VT_entropy(model,V,T,z)/molecular_weight(model,z)
+
 
 function VT_entropy_res(model::EoSModel, V, T, z=SA[1.])
     fun(x) = eos_res(model,V,x,z)
@@ -51,6 +55,9 @@ function VT_internal_energy(model::EoSModel, V, T, z::AbstractVector=SA[1.])
     A, ∂A∂T = f∂fdT(model,V₀,T,z)
     return A - T*∂A∂T
 end
+
+VT_mass_internal_energy(model::EoSModel,V, T, z::AbstractVector = SA[1.0]) = VT_internal_energy(model,V,T,z)/molecular_weight(model,z)
+
 
 function VT_internal_energy_res(model::EoSModel, V, T, z=SA[1.])
     A, ∂A∂V, ∂A∂T = ∂f_res_vec(model,V,T,z)
@@ -78,6 +85,8 @@ function VT_enthalpy(model::EoSModel, V, T, z::AbstractVector=SA[1.])
     end
 end
 
+VT_mass_enthalpy(model::EoSModel,V, T, z::AbstractVector = SA[1.0]) = VT_enthalpy(model,V,T,z)/molecular_weight(model,z)
+
 function VT_enthalpy_res(model::EoSModel, V, T, z=SA[1.])
     A, ∂A∂V, ∂A∂T = ∂f_res_vec(model,V,T,z)
     PrV = ifelse(isinf(primalval(V)),zero(∂A∂V),- V*∂A∂V)
@@ -104,6 +113,8 @@ function VT_gibbs_free_energy(model::EoSModel, V, T, z::AbstractVector=SA[1.], p
     end
 end
 
+VT_mass_gibbs_free_energy(model::EoSModel,V, T, z::AbstractVector = SA[1.0],p = nothing) = VT_gibbs_free_energy(model,V,T,z,p)/molecular_weight(model,z)
+
 function VT_gibbs_free_energy_res(model::EoSModel, V, T, z=SA[1.])
     fun(x) = eos_res(model,x,T,z)
     Ar,∂A∂Vr = Solvers.f∂f(fun,V)
@@ -114,6 +125,9 @@ end
 function VT_helmholtz_free_energy(model::EoSModel, V, T, z::AbstractVector=SA[1.])
     return eos(model,V,T,z)
 end
+
+VT_mass_helmholtz_free_energy(model::EoSModel,V, T, z::AbstractVector = SA[1.0]) = VT_helmholtz_free_energy(model,V,T,z)/molecular_weight(model,z)
+
 
 function VT_helmholtz_free_energy_res(model::EoSModel, V, T, z=SA[1.])
     return eos_res(model,V,T,z)
@@ -129,6 +143,9 @@ function VT_isochoric_heat_capacity(model::EoSModel, V, T, z=SA[1.])
     return -T*∂²A∂T²
 end
 
+VT_mass_isochoric_heat_capacity(model::EoSModel,V, T, z::AbstractVector = SA[1.0]) = VT_isochoric_heat_capacity(model,V,T,z)/molecular_weight(model,z)
+
+
 function VT_isobaric_heat_capacity(model::EoSModel, V, T, z=SA[1.])
     if iszero(1/V) || model isa IdealModel
         ∂²A∂T² = ∂²f∂T²(model,V,T,z)
@@ -141,6 +158,8 @@ function VT_isobaric_heat_capacity(model::EoSModel, V, T, z=SA[1.])
         return -T*(∂²A∂T² - ∂²A∂V∂T^2/∂²A∂V²)
     end
 end
+
+VT_mass_isobaric_heat_capacity(model::EoSModel,V, T, z::AbstractVector = SA[1.0]) = VT_isobaric_heat_capacity(model,V,T,z)/molecular_weight(model,z)
 
 function VT_adiabatic_index(model::EoSModel, V, T, z=SA[1.])
     if iszero(1/V) || model isa IdealModel
@@ -230,14 +249,14 @@ end
 """
     second_virial_coefficient(model::EoSModel, T, z=SA[1.])
 
-Default units: `[m^3]`
+Default units: `[m³]`
 
 Calculates the second virial coefficient `B`, defined as:
 
 ```julia
 B = lim(ρ->0)[∂Aᵣ/∂ρ]
 ```
-where `Aᵣ` is the residual helmholtz energy.
+where `Aᵣ` is the residual Helmholtz energy.
 """
 function second_virial_coefficient(model::EoSModel, T, z=SA[1.])
    return second_virial_coefficient_impl(model,T,z)
@@ -245,9 +264,9 @@ end
 
 function second_virial_coefficient_impl(model::EoSModel, T, z = SA[1.0])
     TT = one(Base.promote_eltype(model,T,z))
-    V = 1/sqrt(eps(TT))
-    f(∂ρ) = a_res(model,1/∂ρ,T,z)
-    return Solvers.derivative(f,1/V)
+    ϵ = 1/eps(TT)
+    V = sqrt(ϵ)
+    return pressure_res(model,V,T,z)*ϵ/(Rgas(model)*T)
 end
 
 function B∂B∂T(model,T,z = SA[1.0])
@@ -257,7 +276,7 @@ end
 """
     cross_second_virial(model,T,z)
 
-Default units: `[m^3]`
+Default units: `[m³]`
 
 Calculates the second cross virial coefficient (B₁₂) of a binary mixture, using the definition:
 
@@ -268,7 +287,7 @@ B₁₂ = (B̄ - x₁^2*B₁₁ - x₂^2*B₂₂)/2x₁x₂
 
 
 !!! info "Composition-dependent property"
-    The second cross virial coefficient calculated from a equation of state can present a dependency on composition [1], but normally, experiments for obtaining the second virial coefficient are made by mixing the same volume of two gases. you can calculate B12 in this way by using (Clapeyron.equivol_cross_second_virial)[@ref]
+    The second cross virial coefficient calculated from an equation of state can present a dependency on composition [1], but normally, experiments for obtaining the second virial coefficient are made by mixing the same volume of two gases. You can calculate B₁₂ in this way by using (Clapeyron.equivol_cross_second_virial)[@ref]
 
 ## References
 1. Jäger, A., Breitkopf, C., & Richter, M. (2021). The representation of cross second virial coefficients by multifluid mixture models and other equations of state. Industrial & Engineering Chemistry Research, 60(25), 9286–9295. [doi:10.1021/acs.iecr.1c01186](https://doi.org/10.1021/acs.iecr.1c01186)
@@ -295,13 +314,13 @@ end
 """
     equivol_cross_second_virial(model::EoSModel,T,p_exp = 200000.0)
 
-calculates the second cross virial coefficient, by simulating the mixing of equal volumes of pure gas, at T,P conditions.
+Calculates the second cross virial coefficient, by simulating the mixing of equal volumes of pure gas, at T,P conditions.
 The equal volume of each pure gas sets an specific molar amount for each component. Details of the experiment can be found at [1].
 
 ## Example
 ```
 model = SAFTVRQMie(["helium","neon"])
-B12 = equivol_cross_second_virial(model,)
+B12 = equivol_cross_second_virial(model,model,T,p_exp = 200000.0)
 
 ```
 ## References
@@ -318,7 +337,7 @@ function equivol_cross_second_virial(model,T,p_exp = 200000.0)
     if isnan(v1+v2)
         return v1 + v2
     end
-    #the test was done on equal volume chambers (300 cc), but mathematically it doesn't matter
+    #the test was done on equal volume chambers (300 cm³), but mathematically it doesn't matter
     v_test = 1.0
     z1 = v_test/v1
     z2 = v_test/v2
@@ -333,19 +352,16 @@ end
 """
     pip(model::EoSModel,V,T,z=[1.0])
 
-Phase identification parameter `Π`. as described in _1_. If `Π > 1`, then the phase is clasified as a liquid or a liquid-like vapor, being a vapor or vapor-like liquid otherwise.
+Phase identification parameter `Π`, as described in _1_. If `Π > 1`, then the phase is clasified as a liquid or a liquid-like vapor, being a vapor or vapor-like liquid otherwise.
 
-This identification parameter fails at temperatures and pressures well aboVe the critical point.
+This identification parameter fails at temperatures and pressures well above the critical point.
 
 Calculated as:
 ```
 Π = V*((∂²p/∂V∂T)/(∂p/∂T) - (∂²p/∂V²)/(∂p/∂V))
 ```
-
-
+## References
 1.  G. Venkatarathnama, L.R. Oellrich, Identification of the phase of a fluid using partial derivatives of pressure, volume,and temperature without reference to saturation properties: Applications in phase equilibria calculations, Fluid Phase Equilibria 301 (2011) 225–233
-
-
 """
 function pip(model::EoSModel, V, T, z=SA[1.0])
     Π,∂p∂V = _pip(model,V,T,z)
@@ -386,10 +402,10 @@ end
 """
     VT_identify_phase(model::EoSModel, V, T, z=SA[1.0])::Symbol
 
-Returns the phase of a fluid at the conditions specified by `V`, `T` and `z`.
+Returns the phase of a fluid at the conditions specified by volume `V`, temperature`T` and composition `z`.
 Uses the phase identification parameter criteria from `Clapeyron.pip`
 
-returns `liquid` if the phase is liquid (or liquid-like), `vapour` if the phase is vapour (or vapour-like), and `:unknown` if the calculation of the phase identification parameter failed (the V-T-z point was mechanically unstable).
+Returns `liquid` if the phase is liquid (or liquid-like), `vapour` if the phase is vapour (or vapour-like), and `:unknown` if the calculation of the phase identification parameter failed (the V-T-z point was mechanically unstable).
 """
 function VT_identify_phase(model::EoSModel, V, T, z=SA[1.0])
     Π,∂p∂V = _pip(model, V, T, z)
@@ -498,15 +514,27 @@ function VT_fugacity_coefficient!(φ,model::EoSModel,V,T,z=SA[1.],p = pressure(m
     return φ
 end
 
+const VT_helmholtz_energy = VT_helmholtz_free_energy
+const VT_gibbs_energy = VT_gibbs_free_energy
+const VT_mass_helmholtz_energy = VT_mass_helmholtz_free_energy
+const VT_mass_gibbs_energy = VT_mass_gibbs_free_energy
+
+
 export pressure
 export second_virial_coefficient,cross_second_virial,equivol_cross_second_virial
 
 const CLAPEYRON_PROPS = [:temperature,:volume, :pressure, :entropy, :internal_energy, :enthalpy, :gibbs_free_energy, :helmholtz_free_energy,
                     :entropy_res, :internal_energy_res, :enthalpy_res, :gibbs_free_energy_res, :helmholtz_free_energy_res,
+                    :helmholtz_energy,:gibbs_energy,
+                    #mass properties, first order
+                    :mass_entropy,:mass_enthalpy,:mass_internal_energy,:mass_gibbs_free_energy,:mass_helmholtz_free_energy,
+                    :mass_helmholtz_energy,:mass_gibbs_energy,
                     #second derivative order properties
                     :isochoric_heat_capacity, :isobaric_heat_capacity, :adiabatic_index,
                     :isothermal_compressibility, :isentropic_compressibility, :speed_of_sound,
                     :isobaric_expansivity, :joule_thomson_coefficient, :inversion_temperature,
+                    #second derivative order, mass properties
+                    :mass_isobaric_heat_capacity,:mass_isochoric_heat_capacity,
                     #higher derivative order properties
                     :fundamental_derivative_of_gas_dynamics,
                     #volume properties
@@ -515,6 +543,7 @@ const CLAPEYRON_PROPS = [:temperature,:volume, :pressure, :entropy, :internal_en
                     :identify_phase, :pip,
 ]
 
+const CLAPEYRON_PROP_ALIASES = [:mass_gibbs_energy,:gibbs_energy,:helmholtz_energy,:mass_helmholtz_energy]
 
 function VT_symbol(x::Symbol)
     return Symbol(:VT_,x)

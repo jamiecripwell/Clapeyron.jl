@@ -58,6 +58,7 @@
         @test Clapeyron.a_LJ(system, V, T, z) ≈ -3.960728242264164 rtol = 1e-6
         @test Clapeyron.a_chain(system, V, T, z) ≈ 0.3736728407455211 rtol = 1e-6
         @test Clapeyron.a_assoc(system, V, T, z) ≈ -2.0461376618069034 rtol = 1e-6
+        test_recombine(system)
         #TODO: check here why the error is so big
         #we disable this test for now, it takes too much time
         #test_gibbs_duhem(system,V,T,z,rtol = 1e-12)
@@ -89,11 +90,14 @@ end
         system = CPA(["ethanol","benzene"])
         @test Clapeyron.a_assoc(system, V, T, z) ≈ -1.1575210505284332 rtol = 1e-6
         test_gibbs_duhem(system, V, T, z)
+        test_scales(system)
+        test_repr(system,str = ["RDF: Carnahan-Starling (original CPA)"])
         GC.gc()
     end
 
     @testset "sCPA" begin
         system = sCPA(["water","carbon dioxide"])
+        test_repr(system,str = ["RDF: Kontogeorgis (s-CPA)"])
         @test Clapeyron.a_assoc(system, V, T, z) ≈ -1.957518287413705 rtol = 1e-6
         GC.gc()
     end

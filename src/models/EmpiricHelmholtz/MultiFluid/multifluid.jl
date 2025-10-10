@@ -55,7 +55,7 @@ Rgas(model::MultiFluid) = model.Rgas
 - JSON data (CoolProp and teqp format)
 
 ## Input models
-- `idealmodel`: Ideal Model. if it is `nothing`, then it will parse the ideal model from the input JSON.
+- `idealmodel`: Ideal Model. If it is `nothing`, then it will parse the ideal model from the input JSON.
 - `mixing`: mixing model for temperature and volume.
 - `departure`: departure model
 
@@ -123,7 +123,7 @@ function MultiFluid(components;
         end
     end
     model = MultiFluid(_components,params,pures,mixing,departure,Rgas,references)
-    recombine_mixing!(model,model.mixing,estimate_mixing)
+    recombine_mixing_reduced!(model,model.mixing,estimate_mixing)
     recombine_departure!(model,model.departure)
     set_reference_state!(model,verbose = verbose)
     return model
@@ -178,16 +178,15 @@ function eos_impl(model::MultiFluid,V,T,z)
     a₀ = a_ideal(model,V,T,z,∑z)
     δ,τ = reduced_delta_tau(model,V,T,z,∑z)
     aᵣ = multiparameter_a_res(model,V,T,z,model.departure,δ,τ,∑z)
-    return ∑z*@R̄()*T*(a₀+aᵣ) + reference_state_eval(model,V,T,z)
+    return ∑z*Rgas(model)*T*(a₀+aᵣ) + reference_state_eval(model,V,T,z)
 end
 
 function eos_res(model::MultiFluid,V,T,z = SA[1.0])
     ∑z = sum(z)
     δ,τ = reduced_delta_tau(model,V,T,z,∑z)
     aᵣ = multiparameter_a_res(model,V,T,z,model.departure,δ,τ,∑z)
-    return ∑z*@R̄()*T*aᵣ
+    return ∑z*Rgas(model)*T*aᵣ
 end
-
 
 v_scale(model::MultiFluid,z) = v_scale(model,z,sum(z))
 T_scale(model::MultiFluid,z) = T_scale(model,z,sum(z))
@@ -208,21 +207,35 @@ function lb_volume(model::MultiFluid,z)
     return dot(z,model.params.lb_volume.values)
 end
 
-#use ideal gas
-function x0_volume_gas(model::MultiFluid,p,T,z)
-    V = sum(z)*R̄*T/p
-    return V
+function x0_crit_pure(model::MultiFluid,z)
+    return (1.0,log10(v_scale(model,z)))
 end
+
+
+#use ideal gas
+#function x0_volume_gas(model::MultiFluid,p,T,z)
+#    
+#end
 
 has_fast_crit_pure(model::MultiFluid) = true
 
 #use each available pure x0_volume_liquid
 function x0_volume_liquid(model::MultiFluid,p,T,z)
     v0 = zero(Base.promote_eltype(model,p,T,z))
+    lb_v = lb_volume(model,T,z)
     for (i,pure) in pairs(model.pures)
-        v0 += z[i]*x0_volume_liquid(pure,p,T,SA[1.0])
+        if T > pure.properties.Tc
+            v0 += z[i]*1.01*lb_volume(pure,T,SA[1.0])
+        else
+            v0 += z[i]*x0_volume_liquid(pure,p,T,SA[1.0])
+        end
     end
     p0 = pressure(model,v0,T,z)
+    for i in 1:10
+        p0 > 0 && break
+        v0 = 0.5v0 + 0.5*1.01*lb_v
+        p0 = pressure(model,v0,T,z)
+    end
     if p0 >= p
         return v0
     else
@@ -230,7 +243,7 @@ function x0_volume_liquid(model::MultiFluid,p,T,z)
     end
 end
 
-function wilson_k_values!(K,model::MultiFluid,p,T,crit = nothing)
+function wilson_k_values!(K,model::MultiFluid,p,T,crit)
     n = length(model)
     pure = model.pures
     _Tc = model.params.Tc.values
@@ -238,11 +251,28 @@ function wilson_k_values!(K,model::MultiFluid,p,T,crit = nothing)
     for i ∈ 1:n
         pure_i = pure[i]
         Tc,pc = _Tc[i],_Pc[i]
-        ps = first(saturation_pressure(pure_i,0.7*Tc))
-        ω = -log10(ps/pc) - 1.0
+        ω = acentric_factor(pure_i,crit = (Tc,pc,NaN))
         K[i] = exp(log(pc/p)+ 5.3726985503194395*(1+ω)*(1-Tc/T))  #5.37 = log(10)*7/3
     end
     return K
+end
+
+function tp_flash_fast_K0!(K,model::MultiFluid,p,T,z)
+    n = length(model)
+    pure = model.pures
+    for i ∈ 1:n
+        pure_i = pure[i]
+        Tc,pc = _Tc[i],_Pc[i]
+        if T < Tc
+            ps = x0_psat(pure_i,T)
+            K[i] = ps/p
+        else
+            ps = x0_psat(pure_i,0.7*Tc)
+            ω = -log10(ps/pc) - 1.0
+            K[i] = exp(log(pc/p)+ 5.3726985503194395*(1+ω)*(1-Tc/T))
+        end
+    end
+    return true
 end
 
 function split_pure_model(model::MultiFluid,splitter)

@@ -3,7 +3,7 @@
     Compressed4DMatrix(vals::AbstractVector,ijab::AbstractVector)
     Compressed4DMatrix(vals,ij,ab,unsafe::Bool = false)
 Struct used to hold association data. as its name says, it is a compressed 4D matrix containing all the non-zero combinations of component-site pairs.
-The component-site pairs `(i,j,a,b)` are sorted lexicographically. the `(i,j)` pairs are stored in the `outer_indices` field, whereas the `(a,b)` pairs are stored in the `inner_indices` field. 
+The component-site pairs `(i,j,a,b)` are sorted lexicographically. The `(i,j)` pairs are stored in the `outer_indices` field, whereas the `(a,b)` pairs are stored in the `inner_indices` field. 
 Let's see an associating model:
 ```julia-repl
 julia> model = PCSAFT(["water","methanol","ethane"],assoc_options = AssocOptions(combining = :esd))
@@ -330,7 +330,7 @@ end
 """
     assoc_similar(mat::Compressed4DMatrix)
     assoc_similar(mat::Compressed4DMatrix,::Type{𝕋}) where 𝕋 <:Number)
-returns a `Clapeyron.Compressed4DMatrix` of the same shape as the input, with the same element type as `𝕋`
+Returns a `Clapeyron.Compressed4DMatrix` of the same shape as the input, with the same element type as `𝕋`
 """
 function assoc_similar(m::Compressed4DMatrix,::Type{𝕋}) where 𝕋 <:Number
     newvalues = zeros(𝕋,length(m.values))
@@ -345,6 +345,19 @@ function indices(x::Compressed4DMatrix)
     return zip(l,xin,x.inner_indices)
 end
 
+function Solvers.primalval(x::Compressed4DMatrix{T}) where T
+    vals = x.values
+    vals₀ = Solvers.primalval(vals)
+    return Compressed4DMatrix(vals₀,x.outer_indices,x.inner_indices,x.outer_size,x.inner_size)
+end
+
+function Solvers.primalval_eager(x::Compressed4DMatrix{T}) where T
+    vals = x.values
+    vals₀ = Solvers.primalval_eager(vals)
+    return Compressed4DMatrix(vals₀,x.outer_indices,x.inner_indices,x.outer_size,x.inner_size)
+end
+
+#=
 """
     SparsePackedMofV{T,V<:AbstractVector{T}} <:SparseArrays.AbstractSparseMatrixCSC{E,Int}
 Sparse Matrix struct used internally to store a matrix of Vectors efficiently.
@@ -415,14 +428,20 @@ function Base.show(io::IO,::MIME"text/plain",A::SparsePackedMofV)
     end
 end
 
-function Solvers.primalval(x::Compressed4DMatrix{T}) where T
-    vals = x.values
-    vals₀ = Solvers.primalval(vals)
-    return Compressed4DMatrix(vals₀,x.outer_indices,x.inner_indices,x.outer_size,x.inner_size)
-end
+function each_split_model(y::SparsePackedMofV,I)
+    idx = y.idx[I,I]
+    if iszero(length(y.storage))
+        return SparsePackedMofV(y.storage,idx)
+    end
 
-function Solvers.primalval_eager(x::Compressed4DMatrix{T}) where T
-    vals = x.values
-    vals₀ = Solvers.primalval_eager(vals)
-    return Compressed4DMatrix(vals₀,x.outer_indices,x.inner_indices,x.outer_size,x.inner_size)
-end
+    if iszero(nnz(idx))
+        st = y.storage
+        storage = PackedVofV([1],zeros(eltype(st.v),0))
+        return SparsePackedMofV(storage,idx)
+    else
+        str = y.storage[nnz(idx)]
+        storage = PackedVectorsOfVectors.pack(str)
+        return SparsePackedMofV(storage,idx)
+    end
+end 
+=#

@@ -14,8 +14,8 @@ include("database_utils.jl")
 
 """
     params = getparams(components,locations;kwargs...)
-returns a `Dict{String,ClapeyronParam}` containing all the parameters found for the list of components
-in the available CSVs. `locations` are the locations relative to `Clapeyron` database. the available keywords are the ones used ∈ [`ParamOptions`](@ref)
+Returns a `Dict{String,ClapeyronParam}` containing all the parameters found for the list of components
+in the available CSVs. `locations` are the locations relative to `Clapeyron` database. The available keywords are the ones used ∈ [`ParamOptions`](@ref)
 if `return_sites` is set to true, `getparams` will add a "sites" value in the params result, containing a `SiteParam` built with the input parameters.
 
 ## Single to Pair promotion
@@ -49,11 +49,11 @@ julia> res["a"].values
  1000  875
   875  700
 ```
-This promotion fails only happens in Single-Pair combinations. it fails otherwise.
+This promotion fails only happens in Single-Pair combinations. It fails otherwise.
 
 ## In-memory CSV parsing
 
-if you pass any string starting with `Clapeyron Database File`, it will be parsed as a CSV instead of being used as a filepath:
+If you pass any string starting with `Clapeyron Database File`, it will be parsed as a CSV instead of being used as a filepath:
 
 ```julia
 julia> x = \"\"\"Clapeyron Database File,
@@ -108,7 +108,7 @@ x = \"\"\"Clapeyron Database File
        sp2,700,0.41
        \"\"\"
 ```
-Will be parsed as a table with single parameter data. if you want more flexibility, you can instead pass the csvtype between brackets:
+Will be parsed as a table with single parameter data. If you want more flexibility, you can instead pass the csvtype between brackets:
 
 ```
 x = \"\"\"Clapeyron Database File
@@ -118,7 +118,7 @@ x = \"\"\"Clapeyron Database File
        sp2,700,0.41
        \"\"\"
 ```
-additionaly, there are some cases when you want to absolutely sure that your types don't clash with the default values. this is the case with different group parametrizations of UNIFAC (Dormund, VTPR, PSRK):
+Additionaly, there are some cases when you want to absolutely sure that your types don't clash with the default values. This is the case with different group parametrizations of UNIFAC (Dormund, VTPR, PSRK):
 
 ```
 julia> model = UNIFAC(["methanol","ethanol"])
@@ -809,7 +809,8 @@ function __verbose_findparams_found(foundvalues)
             show_pairs(io,first.(v.component_info),v.data," => ",quote_string = false)
             vals = String(take!(io))
             kk = info_color(v.name)
-            @info("""Found single component data: $kk with values:
+            TT = eltype(v.data)
+            @info("""Found single component data: $kk with $TT values:
             $vals
             """)
         elseif v.type == pairdata
@@ -817,7 +818,8 @@ function __verbose_findparams_found(foundvalues)
             show_pairs(io,first.(v.component_info,2),v.data," => ",quote_string = false)
             vals = String(take!(io))
             kk = info_color(v.name)
-            @info("""Found pair component data: $kk with values:
+            TT = eltype(v.data)
+            @info("""Found pair component data: $kk with $TT values:
             $vals
             """)
         elseif v.type == assocdata
@@ -825,7 +827,8 @@ function __verbose_findparams_found(foundvalues)
             show_pairs(io,__assoc_string.(v.component_info),v.data," => ",quote_string = false)
             vals = String(take!(io))
             kk = info_color(v.name)
-            @info("""Found association component data: $kk with values:
+            TT = eltype(v.data)
+            @info("""Found association component data: $kk with $TT values:
             $vals
             """)
         elseif v.type == groupdata

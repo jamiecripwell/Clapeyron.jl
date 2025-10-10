@@ -14,7 +14,7 @@ Only two phases are supported. if `K0` is `nothing`, it will be calculated via t
 - `K_tol`: tolerance to stop the calculation.
 - `ss_iters`: number of Successive Substitution iterations to perform.
 - `nacc`: accelerate successive substitution method every nacc steps. Should be a integer bigger than 3. Set to 0 for no acceleration.
-- `second_order`: wheter to solve the gibbs energy minimization using the analytical hessian or not.
+- `second_order`: whether to solve the Gibbs energy minimization using the analytical hessian or not.
 - `noncondensables`: arrays with names (strings) of components non allowed on the liquid phase. In the case of LLE equilibria, corresponds to the `x` phase.
 - `nonvolatiles`: arrays with names (strings) of components non allowed on the vapour phase. In the case of LLE equilibria, corresponds to the `y` phase.
 - `flash_result::FlashResult`: can be provided instead of `x0`,`y0` and `vol0` for initial guesses.
@@ -31,16 +31,20 @@ struct MichelsenTPFlash{T} <: TPFlashMethod
     second_order::Bool
     noncondensables::Union{Nothing,Vector{String}}
     nonvolatiles::Union{Nothing,Vector{String}}
+    verbose::Bool
 end
+
+michelsen_use_opt_solver(::MichelsenTPFlash) = true
+michelsen_itss(method::MichelsenTPFlash) = method.ss_iters
 
 Base.eltype(method::MichelsenTPFlash{T}) where T = T
 
 function index_reduction(m::MichelsenTPFlash,idx::AbstractVector)
-    equilibrium,K0,x0,y0,v0,K_tol,ss_iters,nacc,second_order,noncondensables,nonvolatiles = m.equilibrium,m.K0,m.x0,m.y0,m.v0,m.K_tol,m.ss_iters,m.nacc,m.second_order,m.noncondensables,m.nonvolatiles
+    equilibrium,K0,x0,y0,v0,K_tol,ss_iters,nacc,second_order,noncondensables,nonvolatiles,verbose = m.equilibrium,m.K0,m.x0,m.y0,m.v0,m.K_tol,m.ss_iters,m.nacc,m.second_order,m.noncondensables,m.nonvolatiles,m.verbose
     K0 !== nothing && (K0 = K0[idx])
     x0 !== nothing && (x0 = x0[idx])
     y0 !== nothing && (y0 = y0[idx])
-    return MichelsenTPFlash(;equilibrium,K0,x0,y0,v0,K_tol,ss_iters,nacc,second_order,noncondensables,nonvolatiles)
+    return MichelsenTPFlash(;equilibrium,K0,x0,y0,v0,K_tol,ss_iters,nacc,second_order,noncondensables,nonvolatiles,verbose)
 end
 
 numphases(::MichelsenTPFlash) = 2
@@ -56,7 +60,8 @@ function MichelsenTPFlash(;equilibrium = :unknown,
                         second_order = false,
                         noncondensables = nothing,
                         nonvolatiles = nothing,
-                        flash_result = nothing)
+                        flash_result = nothing,
+                        verbose = false)
     !(is_vle(equilibrium) | is_lle(equilibrium) | is_unknown(equilibrium))  && throw(error("invalid equilibrium specification for MichelsenTPFlash"))
 
     if flash_result isa FlashResult
@@ -65,7 +70,7 @@ function MichelsenTPFlash(;equilibrium = :unknown,
         np != 2 && incorrect_np_flash_error(MichelsenTPFlash,flash_result)
         w1,w2 = comps[1],comps[2]
         v = (volumes[1],volumes[2])
-        return Michelsentp_flash(;equilibrium,x0 = w1,y0 = w2,vol0 = v,K_tol,ss_iters,nacc,second_order,noncondensables,nonvolatiles)
+        return MichelsenTPFlash(;equilibrium,x0 = w1,y0 = w2,vol0 = v,K_tol,ss_iters,nacc,second_order,noncondensables,nonvolatiles,verbose)
     end
 
     if K0 == x0 == y0 == nothing #nothing specified
@@ -90,7 +95,8 @@ function MichelsenTPFlash(;equilibrium = :unknown,
     #        throw(error("LLE equilibria does not support setting noncondensables"))
     #    end
     #end
-
+    nonvolatiles isa String && (nonvolatiles = [nonvolatiles])
+    noncondensables isa String && (noncondensables = [noncondensables])
     #check for nacc
     if nacc in (1,2,3) || nacc < 0
         throw(error("incorrect specification for nacc"))
@@ -107,43 +113,61 @@ function MichelsenTPFlash(;equilibrium = :unknown,
         _v0 = v0
     end
 
-    return MichelsenTPFlash{TT}(equilibrium,K0,x0,y0,_v0,K_tol,ss_iters,nacc,second_order,noncondensables,nonvolatiles)
+    return MichelsenTPFlash{TT}(equilibrium,K0,x0,y0,_v0,K_tol,ss_iters,nacc,second_order,noncondensables,nonvolatiles,verbose)
 end
 
 #hook to precalculate things with the activity model.
 __tpflash_cache_model(model::EoSModel,p,T,z,equilibrium) = model
 
-function __tpflash_gibbs_reduced(model,p,T,x,y,β,eq)
-    (gibbs_free_energy(model,p,T,x)*(1-β)+gibbs_free_energy(model,p,T,y)*β)/Rgas(model)/T
+__tpflash_gibbs_reduced(model,p,T,x,y,β,eq) = __tpflash_gibbs_reduced(model,p,T,x,y,β,eq,nothing)
+
+function __tpflash_gibbs_reduced(model,p,T,x,y,β,eq,volumes)
+    if volumes == nothing
+        return (gibbs_free_energy(model,p,T,x)*(1-β)+gibbs_free_energy(model,p,T,y)*β)/Rgas(model)/T
+    else
+        vx,vy = volumes
+        return (VT_gibbs_free_energy(model,vx,T,x,p)*(1-β)+VT_gibbs_free_energy(model,vy,T,y,p)*β)/Rgas(model)/T
+    end
 end
+
 
 function tp_flash_impl(model::EoSModel,p,T,z,method::MichelsenTPFlash)
 
     model_cached = __tpflash_cache_model(model,p,T,z,method.equilibrium)
 
-    x,y,β,v = tp_flash_michelsen(model_cached,p,T,z;equilibrium = method.equilibrium, K0 = method.K0,
-            x0 = method.x0, y0 = method.y0, vol0 = method.v0,
-            K_tol = method.K_tol,itss = method.ss_iters, nacc=method.nacc,
-            second_order = method.second_order,
-            non_inx_list=method.noncondensables, non_iny_list=method.nonvolatiles,
-            reduced = true)
+    x,y,β,v = tp_flash_michelsen(model_cached,p,T,z,method,true)
 
     if isnan(β) && isapprox(x,z) && isapprox(y,z) && !isnan(v[1]) && !isnan(v[2])
         return FlashResult([x],[one(β)],[v[1]],FlashData(p,T))
     end
-    g = __tpflash_gibbs_reduced(model_cached,p,T,x,y,β,method.equilibrium)
+
+    volumes = [v[1],v[2]]
+    if has_a_res(model_cached)
+        g = __tpflash_gibbs_reduced(model_cached,p,T,x,y,β,method.equilibrium,volumes)
+    else
+        g = __tpflash_gibbs_reduced(model_cached,p,T,x,y,β,method.equilibrium)
+    end
 
     comps = [x,y]
-    volumes = [v[1],v[2]]
     βi = [1-β ,β]
     return FlashResult(comps,βi,volumes,FlashData(p,T,g))
 end
 
-function tp_flash_michelsen(model::EoSModel, p, T, z; equilibrium=:vle, K0=nothing,
-                                     x0=nothing, y0=nothing, vol0=(nothing, nothing),
-                                     K_tol=1e-8, itss=21, nacc=5, second_order=false, use_opt_solver = true,
-                                     non_inx_list=nothing, non_iny_list=nothing, reduced=false)
+function tp_flash_michelsen(model::EoSModel, p, T, z, method = MichelsenTPFlash(), reduced = false)
 
+    equilibrium = method.equilibrium
+    K0 = method.K0
+    x0 = method.x0
+    y0 = method.y0
+    vol0 = method.v0
+    K_tol = method.K_tol
+    itss = michelsen_itss(method)
+    nacc = method.nacc
+    second_order = hasfield(typeof(method),:second_order) ? method.second_order : false
+    use_opt_solver = michelsen_use_opt_solver(method)
+    verbose = method.verbose
+    non_inx_list = method.noncondensables
+    non_iny_list = method.nonvolatiles
 
     if !reduced
         model_full,z_full = model,z
@@ -163,15 +187,12 @@ function tp_flash_michelsen(model::EoSModel, p, T, z; equilibrium=:vle, K0=nothi
 
     nc = length(model)
     # constructing non-in-x list
-    non_inx = fill(false,nc)
+    model_components = component_list(model)
+    non_inx = comps_in_equilibria(model_components,non_inx_list)
+    non_inx .= (!).(non_inx)
     # constructing non-in-y list
-    non_iny = fill(false,nc)
-
-    for i in 1:nc
-        component = model.components[i]
-        non_inx[i] = !isnothing(non_inx_list) && (component in non_inx_list) && true
-        non_iny[i] = !isnothing(non_iny_list) && (component in non_iny_list) && true
-    end
+    non_iny = comps_in_equilibria(model_components,non_iny_list)
+    non_iny .= (!).(non_iny)
 
     non_inw = (non_inx,non_iny)
     phases = (phasex,phasey)
@@ -189,42 +210,52 @@ function tp_flash_michelsen(model::EoSModel, p, T, z; equilibrium=:vle, K0=nothi
     if !isnothing(K0)
         K .= 1. * K0
         lnK .= log.(K)
+        verbose && @info "K0 already provided"
     elseif !isnothing(x0) && !isnothing(y0)
         x = x0 ./ sum(x0)
         y = y0 ./ sum(y0)
         lnK .= log.(y ./ x)
-        lnK,volx,voly,_ = update_K!(lnK,model,p,T,x,y,nothing,(volx,voly),phases,non_inw,dlnϕ_cache)
+        lnK,volx,voly,_ = update_K!(lnK,model,p,T,x,y,z,nothing,(volx,voly),phases,non_inw,dlnϕ_cache)
         K .= exp.(lnK)
+        verbose && @info "x0,y0 provided, calculating K0 via Clapeyron.update_K!"
     elseif is_vle(equilibrium) || is_unknown(equilibrium)
-        # Wilson Correlation for K
-        tp_flash_K0!(K,model,p,T)
+        # VLE correlation for K
+        verbose && @info "K0 calculated via pure VLE correlation"
+        tp_flash_K0!(K,model,p,T,z)
+
         #if we can't predict K, we use lle
         if is_unknown(equilibrium)
             Kmin,Kmax = extrema(K)
-
-            if Kmin >= 1 || Kmax <= 1
-                K .= K0_lle_init(model,p,T,z)
+            if Kmin > 1 || Kmax < 1
+                verbose && @info "VLE correlation falied, trying LLE initial point."
+                K = K0_lle_init(model,p,T,z)
             end
         end
         lnK .= log.(K)
        # volx,voly = NaN*_1,NaN*_1
     else
+        verbose && @info "K0 calculated via LLE initial point (tpd)"
         K .= K0_lle_init(model,p,T,z)
         lnK .= log.(K)
     end
-    _1 = one(p+T+first(z))
+    verbose && @info "K0 = $K"
+    _1 = one(eltype(K))
     # Initial guess for phase split
     β,singlephase,_,g01 = rachfordrice_β0(K,z,nothing,non_inx,non_iny)
+    
     g0,g1 = g01
     #if singlephase == true, maybe initial K values overshoot the actual phase split.
     if singlephase
+        verbose && @info "rachford-rice limits suggests single phase result, trying to check bubble or dew conditions"
         Kmin,Kmax = extrema(K)
         if !(Kmin >= 1 || Kmax <= 1)
             #valid K, still single phase.
             if g0 <= 0 && g1 < 0 #bubble point.
+                verbose && @info "suppossing β = 0 (bubble initialization)"
                 β = eps(typeof(β))
                 singlephase = false
             elseif g0 > 0 && g1 >= 0 #dew point
+                verbose && @info "suppossing β = 1 (dew initialization)"
                 β = one(β) - eps(typeof(β))
                 singlephase = false
             end
@@ -232,6 +263,9 @@ function tp_flash_michelsen(model::EoSModel, p, T, z; equilibrium=:vle, K0=nothi
     else
         β = rachfordrice(K, z; β0=β, non_inx=non_inx, non_iny=non_iny)
     end
+
+    verbose && @info "initial vapour fraction = $β"
+    verbose && singlephase && @info "initial point is single-phase (does not satisfy Rachford-Rice constraints). Exiting early"
     # Stage 1: Successive Substitution
     error_lnK = _1
     it = 0
@@ -254,8 +288,9 @@ function tp_flash_michelsen(model::EoSModel, p, T, z; equilibrium=:vle, K0=nothi
         itacc += 1
         lnK_old .= lnK
         x,y = update_rr!(K,β,z,x,y,non_inx,non_iny)
+
         # Updating K's
-        lnK,volx,voly,gibbs = update_K!(lnK,model,p,T,x,y,β,(volx,voly),phases,non_inw,dlnϕ_cache)
+        lnK,volx,voly,gibbs = update_K!(lnK,model,p,T,x,y,z,β,(volx,voly),phases,non_inw,dlnϕ_cache)
         vcache[] = (volx,voly)
         # acceleration step
         if itacc == (nacc - 2)
@@ -270,8 +305,8 @@ function tp_flash_michelsen(model::EoSModel, p, T, z; equilibrium=:vle, K0=nothi
             K_dem .= exp.(lnK_dem)
             β_dem = rachfordrice(K_dem, z; β0=β, non_inx=non_inx, non_iny=non_iny)
             x_dem,y_dem = update_rr!(K_dem,β_dem,z,x_dem,y_dem,non_inx,non_iny)
-            lnK_dem,volx_dem,voly_dem,gibbs_dem = update_K!(lnK_dem,model,p,T,x_dem,y_dem,β,(volx,voly),phases,non_inw,dlnϕ_cache)
-            # only accelerate if the gibbs free energy is reduced
+            lnK_dem,volx_dem,voly_dem,gibbs_dem = update_K!(lnK_dem,model,p,T,x_dem,y_dem,z,β_dem,(volx,voly),phases,non_inw,dlnϕ_cache)
+            # only accelerate if the Gibbs energy is reduced
             if gibbs_dem < gibbs
                 lnK .= lnK_dem
                 volx = _1 * volx_dem
@@ -282,13 +317,22 @@ function tp_flash_michelsen(model::EoSModel, p, T, z; equilibrium=:vle, K0=nothi
         end
         K .= exp.(lnK)
         β = rachfordrice(K, z; β0=β, non_inx=non_inx, non_iny=non_iny)
+
+        if isnan(β) #try to save K? basically damping
+            K .= 0.5 * K .+ 0.5 * y ./ x
+            β = rachfordrice(K, z; non_inx=non_inx, non_iny=non_iny)
+        end
+
         singlephase = !(0 < β < 1) #rachford rice returns 0 or 1 if it is single phase.
         # Computing error
         # error_lnK = sum((lnK .- lnK_old).^2)
         error_lnK = dnorm(@view(lnK[in_equilibria]),@view(lnK_old[in_equilibria]),1)
     end
-    # Stage 2: Minimization of Gibbs Free Energy
+    verbose && it > 0 && @info "$it SS iterations done, error(lnK) = $error_lnK"
+
+    # Stage 2: Minimization of Gibbs energy
     if error_lnK > K_tol && it == itss && !singlephase && use_opt_solver
+        verbose && @info "$error(lnK) > $K_tol, solving via non-linear system"
         nx = zeros(nc)
         ny = zeros(nc)
         if any(non_inx)
@@ -309,7 +353,7 @@ function tp_flash_michelsen(model::EoSModel, p, T, z; equilibrium=:vle, K0=nothi
         fgibbs!(F, G, ny_var) = fgibbs!(F, G, nothing, ny_var)
 
         if second_order
-            sol = Solvers.optimize(Solvers.only_fgh!(fgibbs!), ny_var0, Solvers.LineSearch(Solvers.Newton()))
+            sol = Solvers.optimize(Solvers.only_fgh!(fgibbs!), ny_var0, Solvers.LineSearch(Solvers.Newton2(ny_var0)))
         else
             sol = Solvers.optimize(Solvers.only_fg!(fgibbs!), ny_var0, Solvers.LineSearch(Solvers.BFGS()))
         end
@@ -323,13 +367,22 @@ function tp_flash_michelsen(model::EoSModel, p, T, z; equilibrium=:vle, K0=nothi
         β = sum(ny)
     end
     K .= y ./ x
+    verbose && @info "final K values: $K"
+    verbose && @info "final vapour fraction: $β"
+
     #convergence checks (TODO, seems to fail with activity models)
     _,singlephase,_,_ = rachfordrice_β0(K,z,β,non_inx,non_iny)
+    verbose && singlephase && @info "result is single-phase (does not satisfy Rachford-Rice constraints)."
+
     vx,vy = vcache[]
     #@show vx,vy
     #maybe azeotrope, do nothing in this case
     if abs(vx - vy) > sqrt(max(abs(vx),abs(vy))) && singlephase
+        verbose && @info "trivial result but different volumes (maybe azeotrope?)"
         singlephase = false
+    elseif !material_balance_rr_converged((x,y),z,β) #material balance failed
+        verbose && @info "material balance failed."
+        singlephase = true
     elseif any(isnan,view(K,in_equilibria))
         singlephase = true
         vn = zero(vx)/zero(vy)

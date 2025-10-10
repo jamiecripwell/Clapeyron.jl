@@ -5,8 +5,11 @@
         neutralmodel::EoSModel = SAFTVRMie,
         ionmodel::IonModel = MSABorn,
         RSPmodel::RSPModel = Schreckenberg,
-        userlocations::Vector{String} = [],
-        ideal_userlocations::Vector{String} = [],
+        charges = String[], 
+        ideal_userlocations = String[],
+        neutralmodel_userlocations = String[],
+        ionmodel_userlocations = String[],
+        RSPmodel_userlocations = String[],
         assoc_options::AssocOptions = AssocOptions(),
         verbose::Bool = false,
         reference_state = nothing)
@@ -16,15 +19,15 @@ This function is used to create an SAFT-VRE Mie model which is a combination of 
 
 ## Input parameters
 ### SAFT-VR Mie Parameters
-- `Mw`: Single Parameter (`Float64`) - Molecular Weight `[g/mol]`
+- `Mw`: Single Parameter (`Float64`) - Molecular Weight `[g·mol⁻¹]`
 - `segment`: Single Parameter (`Float64`) - Number of segments (no units)
-- `sigma`: Single Parameter (`Float64`) - Segment Diameter [`A°`]
-- `epsilon`: Single Parameter (`Float64`) - Reduced dispersion energy  `[K]`
+- `sigma`: Single Parameter (`Float64`) - Segment Diameter `[Å]`
+- `epsilon`: Single Parameter (`Float64`) - Reduced dispersion energy `[K]`
 - `lambda_a`: Pair Parameter (`Float64`) - Atractive range parameter (no units)
 - `lambda_r`: Pair Parameter (`Float64`) - Repulsive range parameter (no units)
-- `k`: Pair Parameter (`Float64`) (optional) - Binary Interaction Paramater (no units)
+- `k`: Pair Parameter (`Float64`) (optional) - Binary Interaction Parameter (no units)
 - `epsilon_assoc`: Association Parameter (`Float64`) - Reduced association energy `[K]`
-- `bondvol`: Association Parameter (`Float64`) - Association Volume `[m^3]`
+- `bondvol`: Association Parameter (`Float64`) - Association Volume `[m³]`
 ### MSA Parameters
 - `sigma`: Single Parameter (`Float64`) - Diameter of closest approach `[m]`
 - `charge`: Single Parameter (`Float64`) - Charge `[-]`
@@ -45,8 +48,10 @@ function SAFTVREMie(solvents,ions;
     neutralmodel = SAFTVRMie,
     ionmodel = MSABorn,
     RSPmodel = Schreckenberg,
-    userlocations = String[], 
-    ideal_userlocations=String[],
+    charges = String[], 
+    ideal_userlocations = String[],
+    neutralmodel_userlocations = String[],
+    ionmodel_userlocations = String[],
     RSPmodel_userlocations = String[],
     assoc_options = AssocOptions(),
     reference_state = nothing,
@@ -54,7 +59,7 @@ function SAFTVREMie(solvents,ions;
 
     return ESElectrolyte(solvents,ions;
     idealmodel,neutralmodel,ionmodel,RSPmodel,
-    userlocations,ideal_userlocations,RSPmodel_userlocations,assoc_options,reference_state,verbose)
+    charges,ideal_userlocations,neutralmodel_userlocations,ionmodel_userlocations,RSPmodel_userlocations,assoc_options,reference_state,verbose)
 end
 
 export SAFTVREMie

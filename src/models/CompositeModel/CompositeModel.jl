@@ -8,30 +8,45 @@ end
 =#
 
 """
-    CompositeModel(components;
-    gas = BasicIdeal,
-    liquid = RackettLiquid,
-    saturation = LeeKeslerSat,
+
+function CompositeModel(components ;
+    mapping = nothing,
+    liquid = nothing,
+    gas = nothing,
+    fluid = nothing,
+    solid = nothing,
+    saturation = nothing,
+    melting = nothing,
+    sublimation = nothing,
     gas_userlocations = String[],
     liquid_userlocations = String[],
+    fluid_userlocations = String[],
+    solid_userlocations = String[],
     saturation_userlocations = String[],
-    mapping = nothing,
-    reference_state = nothing,
-    verbose = false)
+    melting_userlocations = String[],
+    sublimation_userlocations = String[],
+    verbose = false,
+    reference_state = nothing)
 
-Model that holds representations of fluid (and/or solid) that aren't evaluated using the helmholtz energy-based approach used in the rest of the library.
+Model that holds representations of fluid (and/or solid) that aren't evaluated using the Helmholtz energy-based approach used in the rest of the library.
 
-It contains a "fluid" and a "solid" field. there are three available representations for a fluid:
-- a helmholtz-based EoS
-- Fluid Correlations, consisting in a gas model, a correlation for obtaining the saturation pressure, and a liquid model. both gas and liquid models can optionally be helmholtz models too, but correlations for saturated liquid and vapour are also allowed.
-- Activity models, consisting of a liquid activity and a model for the fluid. the fluid model can be a helmholtz-based model, or another `CompositeModel` containing correlations.
+It contains a fluid model, a solid model (optional), and a mapping between the solid and liquid components (if necessary). 
 
-When the solid field is specified, some properties (like `volume`) start taking in account the solid phase in their calculations. optionally, there are other models that provide specific correlations for SLE equilibria (like `SolidHfus`)
+There are three available representations for the fluid model:
+
+- A Helmholtz-based EoS.
+- Fluid Correlations, consisting in a gas model, a correlation for obtaining the saturation pressure, and a liquid model. Both gas and liquid models can optionally be Helmholtz models too, but correlations for saturated liquid and vapour are also allowed.
+- Activity models, consisting of a liquid activity and a model for the fluid. The fluid model can be a Helmholtz-based model, or another `CompositeModel` containing correlations.
+When the solid field is specified, some properties (like `volume`) start taking in account the solid phase in their calculations. Optionally, there are other models that provide specific correlations for SLE equilibria (like `SolidHfus`).
+
+The solid model is optional and does not impact VLE (and LLE) calculations. There are two available representations for the solid model:
+- a Helmholtz-based EoS, can be used to calculate both melting/sublimation and solubilities.
+- Chemical Potential models, can be used for solubilities.
 
 ## Examples:
 - Saturation pressure calculated using Correlations:
 ```julia-repl
-#rackett correlation for liquids, DIPPR 101 correlation for the saturation pressure, ideal gas for the vapour volume
+#Rackett correlation for liquids, DIPPR 101 correlation for the saturation pressure, ideal gas for the vapour volume.
 julia> model = CompositeModel(["water"],liquid = RackettLiquid,saturation = DIPPR101Sat,gas = BasicIdeal)
 Composite Model (Correlation-Based) with 1 component:
  Gas Model: BasicIdeal()
@@ -56,7 +71,7 @@ julia> bubble_pressure(model,300.15,[0.9,0.1])
 
 - Bubble Pressure, using an Activity Model along with another model for fluid properties:
 ```julia-repl
-#using a helmholtz-based fluid
+#using a Helmholtz-based fluid
 julia> model = CompositeModel(["octane","heptane"],liquid = UNIFAC,fluid = PR)
 Composite Model (γ-ϕ) with 2 components:
  Activity Model: UNIFAC{PR{BasicIdeal, PRAlpha, NoTranslation, vdW1fRule}}("octane", "heptane")
@@ -81,7 +96,7 @@ CompositeModel
 """
     RestrictedEquilibriaModel <: EoSModel
 
-Abstract type of models that implement simplifications over the equality of chemical potentials approach for phase equilibria. subtypes of `RestrictedEquilibriaModel` are the `GammaPhi` (activity + gas), `FluidCorrelation` (for fluid phase change and volume correlations) and `SolidCorrelation` (for solid phase change and solid volume correlations)
+Abstract type of models that implement simplifications over the equality of chemical potentials approach for phase equilibria. Subtypes of `RestrictedEquilibriaModel` are the `GammaPhi` (activity + gas), `FluidCorrelation` (for fluid phase change and volume correlations) and `SolidCorrelation` (for solid phase change and solid volume correlations).
 """
 abstract type RestrictedEquilibriaModel <: EoSModel end
 
@@ -89,12 +104,13 @@ include("FluidCorrelation.jl")
 include("SolidCorrelation.jl")
 include("GammaPhi.jl")
 include("GenericAncEvaluator.jl")
+include("SolidModel/IAPWS06.jl")
 include("SaturationModel/SaturationModel.jl")
 include("LiquidVolumeModel/LiquidVolumeModel.jl")
-#include("LiquidCpModel/LiquidCpModel.jl")
+include("SolidModel/SolidModel.jl")
 include("PolExpVapour.jl")
-include("SolidModel/SolidHfus.jl")
-include("SolidModel/SolidKs.jl")
+
+
 include("bubble_point.jl")
 include("dew_point.jl")
 
@@ -123,6 +139,28 @@ function init_model_act(model::Union{Type{<:ActivityModel},Base.Function},compon
     end
 end
 
+##mapping utilities:
+
+_mapping_split(model::CompositeModel) = _mapping_split(model,model.mapping)
+_mapping_split(model::CompositeModel,::Nothing) = [[i] for i in 1:length(model)]
+function _mapping_split(model::CompositeModel,mapping)
+    comps = component_list(model)
+    comps_fluid = map.(first,first.(mapping))
+    idxs = Vector{Int64}.(indexin.(comps_fluid,Ref(comps)))
+    return idxs
+end
+
+_mapping_fractions(model::CompositeModel) = _mapping_fractions(model,model.mapping)
+_mapping_fractions(model::CompositeModel,::Nothing) =  [[1.0] for i in 1:length(model)]
+
+function _mapping_fractions(model::CompositeModel,mapping)
+    idx = _mapping_split(model,mapping)
+    comps = component_list(model)
+    n_fluids = map.(last,first.(mapping))
+    n_solids = map(last,last.(mapping))
+    return n_fluids .* inv.(n_solids)
+    #idxs = Vector{Int64}.(indexin.(comps_fluid,Ref(comps)))
+end
 
 function CompositeModel(components ;
     mapping = nothing,
@@ -204,6 +242,8 @@ function CompositeModel(components ;
 
     if isnothing(init_fluid) || isnothing(init_solid) && isnothing(mapping)
         _mapping = nothing
+    elseif !hasfield(typeof(init_fluid),:components) || !hasfield(typeof(init_solid),:components)
+        _mapping = nothing
     else
         if isnothing(mapping) && init_fluid.components!=init_solid.components
             throw(ArgumentError("Invalid specification for CompositeModel. Please specify mapping between species in solid and liquid phase"))
@@ -217,9 +257,39 @@ function CompositeModel(components ;
             end
         end
     end
-    model = CompositeModel(_components,init_fluid,init_solid,_mapping)
+    model = CompositeModel(_components,init_fluid,init_solid,_mapping,ReferenceState(:solid))
     set_reference_state!(model,reference_state,verbose = verbose)
+    set_solid_reference_state!(model,verbose = verbose)
     return model
+end
+
+function set_solid_reference_state!(model::CompositeModel;verbose = false)
+    solid = solid_model(model)
+    isnothing(solid) && return nothing
+    ref_solid = gibbsmodel_reference_state_consts(solid)
+    if isnothing(ref_solid)
+        verbose && @info "$(typeof(solid)) does not have Clapeyron.gibbsmodel_reference_state_consts defined. skipping solid reference initialization" 
+        return nothing
+    end
+    fluid = fluid_model(model)
+    ref = model.solid_reference_state
+    mapped_split = _mapping_split(model)
+    mapped_fractions = _mapping_fractions(model)
+    xs = SA[1.0]
+    initialize_reference_state!(model.solid,ref)
+    #TODO: support mapping
+    if isone(length(solid)) && isone(length(fluid))
+        k1,k2 = calculate_gibbs_reference_state(solid,fluid)
+        ref.a0[1] = k1
+        ref.a1[1] = k2
+    else
+        pure_solid = split_pure_model(solid)
+        mapped_fluid = split_model(fluid,mapped_split) #inject mapping here
+        k = calculate_gibbs_reference_state.(pure_solid,mapped_fluid,Ref(xs),mapped_fractions)
+        ref.a0 .= first.(k)
+        ref.a1 .= last.(k)
+    end
+    return nothing
 end
 
 reference_state(model::CompositeModel) = reference_state(model.fluid)
@@ -245,26 +315,34 @@ function Base.show(io::IO,mime::MIME"text/plain",model::CompositeModel)
     end
     length(model) == 1 && print(io, " with 1 component:")
     length(model) > 1 && print(io, " with ", length(model), " components:")
+    println(io)
+    show_pairs(io,model.components)
+
     if solid !== nothing
         if solid isa SolidCorrelation
-            solid.phase !== nothing && print(io,'\n'," Solid Phase Model: ",model.solid)
-            solid.melting !== nothing && print(io,'\n'," Melting Model: ",model.melting)
-            solid.sublimation !== nothing && print(io,'\n'," Sublimation Model: ",model.saturation)
+            solid.phase !== nothing && print(io,'\n',"Solid Phase Model: ",typeof(model.solid))
+            solid.melting !== nothing && print(io,'\n',"Melting Model: ",typeof(model.melting))
+            solid.sublimation !== nothing && print(io,'\n',"Sublimation Model: ",typeof(model.saturation))
         else
-            print(io,'\n'," Solid Model: ",solid)
+            print(io,'\n',"Solid Model: ",solid)
         end
     end
 
     if fluid !== nothing
         if fluid isa GammaPhi
-            print(io,'\n'," Activity Model: ",fluid.activity)
-            print(io,'\n'," Fluid Model: ",fluid.fluid.model) #on gamma-phi, fluid is an EoSVectorParam
+            act = fluid.activity
+            if hasfield(typeof(act),:puremodel)
+                print(io,'\n',"Activity Model: ", parameterless_type(act))
+            else
+                print(io,'\n',"Activity Model: ",typeof(act))
+            end
+            print(io,'\n',"Fluid Model: ",typeof(fluid.fluid.model)) #on gamma-phi, fluid is an EoSVectorParam
         elseif fluid isa FluidCorrelation
-            fluid.gas !== nothing && print(io,'\n'," Gas Model: ",fluid.gas)
-            fluid.liquid !== nothing && print(io,'\n'," Liquid Model: ",fluid.liquid)
-            fluid.saturation !== nothing && print(io,'\n'," Saturation Model: ",fluid.saturation)
+            fluid.gas !== nothing && print(io,'\n',"Gas Model: ",typeof(fluid.gas))
+            fluid.liquid !== nothing && print(io,'\n',"Liquid Model: ",typeof(fluid.liquid))
+            fluid.saturation !== nothing && print(io,'\n',"Saturation Model: ",typeof(fluid.saturation))
         else
-            fluid !== nothing && print(io,'\n'," Fluid Model: ",fluid)
+            fluid !== nothing && print(io,'\n',"Fluid Model: ",fluid)
         end
     end
     show_reference_state(io,model;space = true)
@@ -293,9 +371,9 @@ function volume_impl(model::CompositeModel,p,T,z,phase,threaded,vol0)
             return nan
         end
     else #phase = :unknown
-        #there is a helmholtz energy model in fluid and solid phases.
+        #there is a Helmholtz energy model in fluid and solid phases.
         #this requires checking evaluating all volumes and checking
-        #what value is the correct one via gibbs energies.
+        #what value is the correct one via Gibbs energies.
         if !(model.fluid isa GammaPhi) && !(model.fluid isa FluidCorrelation) && !(model.solid isa SolidCorrelation)
             return default_volume_impl(model,p,T,z,phase,threaded,vol0)
         else
@@ -388,7 +466,7 @@ function dew_temperature(model::CompositeModel, T, x, method::DewPointMethod)
     return dew_temperature(model.fluid, T, x, method)
 end
 
-#Michelsen TPFlash and rachford rice tpflash support
+#Michelsen TPFlash and Rachford-Rice TPFlash support
 function init_preferred_method(method::typeof(tp_flash),model::CompositeModel{<:Any,Nothing},kwargs)
     init_preferred_method(method,model.fluid,kwargs)
 end
@@ -400,4 +478,34 @@ function gibbs_solvation(model::CompositeModel,T)
     return gibbs_solvation(model.fluid,T)
 end
 
+function promote_model(::Type{T},model::CompositeModel) where T <: Number
+    components = model.components
+    fluid = promote_model(T,model.fluid)
+    solid = promote_model(T,model.solid)
+    mapping = model.mapping
+    return CompositeModel(components,fluid,solid,mapping)
+end
+
+function split_pure_solid(model::CompositeModel)
+    idx = _mapping_split(model)
+    fluid = split_model(model.fluid,idx)
+    solid = split_model(model.solid)
+    mapping = split_model(model.mapping)
+    comps = split_model(model.components,idx)
+    ref = split_model(model.solid_reference_state)
+    return CompositeModel.(comps,fluid,solid,mapping,ref)
+end
+
+function calculate_gibbs_reference_state(model::CompositeModel)
+    solid = solid_model(model)
+    single_component_check(calculate_gibbs_reference_state,solid)
+    ref = model.solid_reference_state
+    if length(ref.z0) == 0
+        fluid = fluid_model(model)
+        return calculate_gibbs_reference_state(solid,fluid)
+    else
+        a0,a1 = ref.a0[1],ref.a1[1]
+        return a0,a1
+    end
+end
 export CompositeModel

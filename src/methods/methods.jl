@@ -3,7 +3,7 @@
 
 Abstract type for all thermodynamic methods.
 
-normally, a thermodynamic method has the form: `property(model,state..,method::ThermodynamicMethod)`.
+Normally, a thermodynamic method has the form: `property(model,state..,method::ThermodynamicMethod)`.
 All methods used in this way subtype `ThermodynamicMethod`.
 
 ## Examples
@@ -128,7 +128,7 @@ const SOLID_STR = (:solid,:SOLID,:s)
     is_solid(x::EoSModel)
 
 Returns `true` if the symbol is in `(:solid,:SOLID,:s)`.
-if `x` is an `EoSModel`, it will return if the model is able to contain a solid phase. In this case, defaults to `false`
+If `x` is an `EoSModel`, it will return `true` if the model is able to contain a solid phase. In this case, defaults to `false`.
 If a string is passed, it is converted to symbol.
 """
 is_solid(sym::Symbol) = sym in SOLID_STR
@@ -174,36 +174,8 @@ end
 equivalent to `sum(iterator,init=0.0)`.
 
 """
-function ∑(iterator)
-    len = Base.IteratorSize(typeof(iterator)) === Base.HasLength()
-    hastype = (Base.IteratorEltype(typeof(iterator)) === Base.HasEltype()) && (eltype(iterator) !== Any)
-    local _0
-    if hastype
-        _0 = zero(eltype(iterator))
-    else
-        _0 = 0.0
-    end
-    len && iszero(length(iterator)) && return _0
-    !len && return reduce(Base.add_sum,iterator,init=_0)
-    return sum(iterator)
-end
-
-∑(x::AbstractArray) = sum(x)
-∑(f,x::AbstractArray) = sum(f,x)
-
-function ∑(fn,iterator)
-    len = Base.IteratorSize(typeof(iterator)) === Base.HasLength()
-    hastype = (Base.IteratorEltype(typeof(iterator)) === Base.HasEltype()) && (eltype(iterator) !== Any)
-    local _0
-    if hastype
-        _0 = zero(eltype(iterator))
-    else
-        _0 = 0.0
-    end
-    len && iszero(length(iterator)) && return _0
-    !len && return mapreduce(fn,Base.add_sum,iterator,init=_0)
-    return sum(fn,iterator)
-end
+∑(x) = sum(x,init = 0.0)
+∑(f,x) = sum(f,x,init = 0.0)
 
 function is_ad_input(model,V,T,z)
     #model_primal = Solvers.primal_eltype(model)
@@ -229,7 +201,7 @@ end
     @nan(function_call,default=NaN)
 
 Wraps the function in a `try-catch` block, and if a `DomainError` or `DivideError` is raised, then returns `default`.
-for better results, its best to generate the default result beforehand
+For better results, its best to generate the default result beforehand.
 """
 macro nan(Base.@nospecialize(fcall),default = nothing)
     quote
@@ -280,14 +252,14 @@ function init_preferred_method(method,model) end
 
 Returns a matrix of "k-values" binary interaction parameters used by the input `model`. Returns `nothing` if the model cannot return the k-values matrix.
 In the case of multiple k-values (as is the case in T-dependent values, i.e: k(T) = k1 + k2*T), it will return a tuple of matrices corresponding to each term in the k-value expression.
-Note that some models do not store the k-value matrix directly, but they contain the value in an indirect manner. for example, cubic EoS store `a[i,j] = f(a[i],a[j],k[i,j])`, where `f` depends on the mixing rule.
+Note that some models do not store the k-value matrix directly, but they contain the value in an indirect manner. For example, cubic EoS store `a[i,j] = f(a[i],a[j],k[i,j])`, where `f` depends on the mixing rule.
 """
 get_k(model::EoSModel) = nothing
 
 """
     get_l(model)::VarArg{Matrix}
 
-returns a matrix of "l-values" binary interaction parameters used by the input `model`. Returns `nothing` if the model cannot return the l-values matrix.
+Returns a matrix of "l-values" binary interaction parameters used by the input `model`. Returns `nothing` if the model cannot return the l-values matrix.
 In the case of multiple l-values (as is the case in T-dependent values, i.e: l(T) = l1 + l2*T), it will return a tuple of matrices corresponding to each term in the l-value expression.
 Note that some models do not store the l-value matrix directly, but they contain the value in an indirect manner. for example, cubic EoS store `b[i,j] = f(b[i],b[j],l[i,j])`, where `f` depends on the mixing rule.
 """
@@ -311,24 +283,53 @@ Sets the model "l-values" binary interaction parameter to the input matrix `l`. 
 """
 set_l!(model::EoSModel,k) = throw(ArgumentError("$(typeof(model)) does not have support for setting l-values"))
 
-export get_k,set_k!
-export get_l,set_l!
+"""
+    IGFormReferenceState(components;H0 = nothing, S0 = nothing, userlocations = nothing, verbose = false,)
 
+Returns a [`ReferenceState`](@ref) storing the ideal gas formation entropies and enthalpies, at 1 bar and 298.15 K
+
+"""
+function IGFormReferenceState(_components;userlocations = String[],H0 = nothing,S0 = nothing,verbose = false)
+    components = format_components(_components)
+    if H0 != nothing && S0 != nothing
+        _H0 = convert(Vector{Float64},H0)
+        _S0 = convert(Vector{Float64},S0)
+    else
+
+        params = getparams(components,["properties/formation_ig.csv"];userlocations = userlocations,verbose = verbose)
+        _H0 = convert(Vector{Float64},params["H0"].values)
+        _S0 = convert(Vector{Float64},params["S0"].values)
+    end 
+    ref = ReferenceState(:ideal_gas,T0 = 298.15,P0 = 1e5,S0 = _S0,H0 = _H0,phase = :vapour)
+    #initialize_reference_state!(components,ref)
+    return ref
+end
+
+#initial guesses for most methods
 include("initial_guess.jl")
+
+#differentials and properties in V-T base
 include("differentials.jl")
 include("VT.jl")
+
+#base functions for isochoric base
 include("isochoric.jl")
-include("fugacity_coefficient.jl")
-include("property_solvers/property_solvers.jl")
-include("tpd.jl")
-include("stability.jl")
+
+#properties in p-T base
 include("pT.jl")
-include("property_solvers/Tproperty.jl")
-include("property_solvers/Pproperty.jl")
+
+#property solvers
+include("property_solvers/property_solvers.jl")
+
+#gibbs models in p-T base
+include("gibbs.jl")
+
+#properties in other bases
 include("XY_methods/VT.jl")
 include("XY_methods/PS.jl")
 include("XY_methods/TS.jl")
 include("XY_methods/PH.jl")
 include("XY_methods/QX.jl")
 
-include("property_solvers/spinodal.jl")
+export get_k,set_k!
+export get_l,set_l!

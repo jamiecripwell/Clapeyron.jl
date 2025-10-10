@@ -8,8 +8,8 @@
     FlashResult(flash::FlashResult,g = nothing;sort = true)
 
 Structure used to contain the result of a flash.
-Contains a list of molar compositions, a list of molar amounts per phase, a list of molar volumes and an auxiliary struct, `FlashData`, containing the pressure, temperature and reduced gibbs energy.
-when an `EoSModel` is used as an input for a `FlashResult`, the reduced molar gibbs energy (g = g/NRT) is calculated, if not provided.
+Contains a list of molar compositions, a list of molar amounts per phase, a list of molar volumes and an auxiliary struct, `FlashData`, containing the pressure, temperature and reduced Gibbs energy.
+when an `EoSModel` is used as an input for a `FlashResult`, the reduced molar Gibbs energy (g = g/NRT) is calculated, if not provided.
 By default, the phases are sorted by volume, this can be changed by passing the keyword argument `sort = false`
 `FlashResult(model,p,T,z;phase)` constructs a single phase `FlashResult`.
 If the bulk composition `z` is provided, it will be used to scale the fractions, forcing `sum(fractions) == sum(z)`
@@ -24,7 +24,7 @@ end
 """
     FlashData
 
-Auxiliary struct that contains information about the current `FlashResult` object. It stores the pressure, temperature and reduced gibbs energy (`g = G/nRT`)
+Auxiliary struct that contains information about the current `FlashResult` object. It stores the pressure, temperature and reduced Gibbs energy (`g = G/nRT`)
 """
 struct FlashData{R}
     p::R
@@ -60,7 +60,7 @@ function FlashResult(model::EoSModel,p,T,z::Union{Number,AbstractVector{<:Number
     return FlashResult(model,p,T,comps,_β,volumes,g;sort)
 end
 
-#constructor that fills the gibbs energy automatically
+#constructor that fills the Gibbs energy automatically
 function FlashResult(model::EoSModel,p,T,comps,β,volumes,g = nothing;sort = true)
     if g == nothing
         flash = FlashResult(p,T,comps,β,volumes,sort = false)
@@ -109,9 +109,9 @@ end
 #constructor for single phase
 function FlashResult(model::EoSModel,p::Number,T::Number,z;phase = :unknown)
     ∑z = sum(z)
-    β = [∑z]
     comps = [z ./ ∑z]
     volumes = [volume(model,p,T,z;phase = phase)/∑z]
+    β = [∑z*one(eltype(volumes))]
     return FlashResult(model,p,T,comps,β,volumes;sort = false)
 end
 
@@ -121,6 +121,16 @@ function FlashResultInvalid(nc::Int,val::Number)
     β = [nan]
     comps = [fill(nan,nc)]
     volumes = [nan]
+    data = FlashData(nan,nan,nan)
+    return FlashResult(comps,β,volumes,data)
+end
+
+function FlashResultInvalid(nc::SVector{N,T},val::Number) where {N,T}
+    nan = zero(T)/zero(T)
+    xx = nc .* nan
+    comps = [xx]
+    volumes = [nan]
+    β = [nan]
     data = FlashData(nan,nan,nan)
     return FlashResult(comps,β,volumes,data)
 end
@@ -187,7 +197,7 @@ function __molecular_weight(model,state::FlashResult)
     ∑mi = zero(eltype(comps[1]))
     for i in 1:length(comps)
         mwi = molecular_weight(model,comps[i])
-        ∑mi = β[i]*mwi
+        ∑mi += β[i]*mwi
     end
     return ∑mi
 end
@@ -196,6 +206,17 @@ function mass_density(model::EoSModel,state::FlashResult)
     V = volume(model,state)
     molar_weight = molecular_weight(model,state)
     return molar_weight/V
+end
+
+function mass_density(model::EoSModel,state::FlashResult, i::Integer)
+    vi,T,xi,βi = state.volumes[i],state.data.T,state.compositions[i],state.fractions[i]
+    molar_weight = molecular_weight(model,xi)
+    return molar_weight/vi
+end
+
+function volume(model::EoSModel,state::FlashResult, i::Integer)
+    vi,T,xi,βi = state.volumes[i],state.data.T,state.compositions[i],state.fractions[i]
+    return vi*βi
 end
 
 function gibbs_free_energy(model::EoSModel,state::FlashResult)
@@ -207,6 +228,11 @@ function gibbs_free_energy(model::EoSModel,state::FlashResult)
     return res
 end
 
+function gibbs_free_energy(model::EoSModel,state::FlashResult, i)
+    p = pressure(state)
+    vi,T,xi,βi = state.volumes[i],state.data.T,state.compositions[i],state.fractions[i]
+    return βi*VT_gibbs_energy(model,vi,T,xi,p)
+end
 
 for prop in [:enthalpy,:entropy,:internal_energy,:helmholtz_free_energy]
     @eval begin
@@ -225,7 +251,24 @@ for prop in [:enthalpy,:entropy,:internal_energy,:helmholtz_free_energy]
                 return res
             end
         end
-    end
+end
+
+mass_entropy(model::EoSModel,state::FlashResult) = entropy(model,state)/molecular_weight(model,state)
+mass_enthalpy(model::EoSModel,state::FlashResult) = mass_enthalpy(model,state)/molecular_weight(model,state)
+mass_internal_energy(model::EoSModel,state::FlashResult) = mass_internal_energy(model,state)/molecular_weight(model,state)
+mass_gibbs_free_energy(model::EoSModel,state::FlashResult) = mass_gibbs_free_energy(model,state)/molecular_weight(model,state)
+mass_helmholtz_free_energy(model::EoSModel,state::FlashResult) = mass_helmholtz_free_energy(model,state)/molecular_weight(model,state)
+
+for prop in [:mass_enthalpy,:mass_entropy,:mass_internal_energy,:mass_helmholtz_free_energy,:mass_gibbs_free_energy]
+    @eval begin
+            function $prop(model::EoSModel,state::FlashResult, i::Integer)
+                res = zero(Base.promote_eltype(model,state))
+                vi,T,xi = state.volumes[i],state.data.T,state.compositions[i]
+                res += VT0.$prop(model,vi,T,xi)
+                return res
+            end
+        end
+end
 
 function assert_only_phase_index(state::FlashResult)
     np = numphases(state)
@@ -243,13 +286,8 @@ function assert_only_phase_index(state::FlashResult)
     end
 end
 
-@noinline function __multiphase_onephase_function_error(f,np,p,T)
-    throw(ArgumentError("The state at p = $p, T = $T has $np phases, it cannot be used to evaluate $f"))
-end
-
-
-
 for prop in [:isochoric_heat_capacity, :isobaric_heat_capacity, :adiabatic_index,
+    :mass_isochoric_heat_capacity, :mass_isobaric_heat_capacity,
     :isothermal_compressibility, :isentropic_compressibility, :speed_of_sound,
     :isobaric_expansivity, :joule_thomson_coefficient, :inversion_temperature,
     #higher :derivative :order :properties
@@ -262,7 +300,7 @@ for prop in [:isochoric_heat_capacity, :isobaric_heat_capacity, :adiabatic_index
             T = temperature(state)
             p = pressure(state)
             if iszero(i)
-                __multiphase_onephase_function_error($prop,numphases(state),p,T)
+                invalid_property_multiphase_error($prop,numphases(state),p,T)
             end
             
             x,v = state.compositions[i],state.volumes[i]

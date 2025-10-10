@@ -1,4 +1,4 @@
-abstract type KUModel <: ABCubicModel end
+abstract type KUModel <: ABCCubicModel end
 
 struct KUParam <: EoSParam
     a::PairParam{Float64}
@@ -40,18 +40,18 @@ end
 ## Input parameters
 - `Tc`: Single Parameter (`Float64`) - Critical Temperature `[K]`
 - `Pc`: Single Parameter (`Float64`) - Critical Pressure `[Pa]`
-- `Vc`: Single Parameter (`Float64`) - Critical Volume `[m^3]`
-- `Mw`: Single Parameter (`Float64`) - Molecular Weight `[g/mol]`
+- `Vc`: Single Parameter (`Float64`) - Critical Volume `[m³]`
+- `Mw`: Single Parameter (`Float64`) - Molecular Weight `[g·mol⁻¹]`
 - `k`: Pair Parameter (`Float64`) (optional)
 - `l`: Pair Parameter (`Float64`) (optional)
 
 ## Model Parameters
 - `Tc`: Single Parameter (`Float64`) - Critical Temperature `[K]`
 - `Pc`: Single Parameter (`Float64`) - Critical Pressure `[Pa]`
-- `Vc`: Single Parameter (`Float64`) - Critical Volume `[m^3]`
+- `Vc`: Single Parameter (`Float64`) - Critical Volume `[m³]`
 - `omega_a`: Single Parameter (`Float64`) - Critical Constant for a - No units
 - `omega_b`: Single Parameter (`Float64`) - Critical Constant for b - No units
-- `Mw`: Single Parameter (`Float64`) - Molecular Weight `[g/mol]`
+- `Mw`: Single Parameter (`Float64`) - Molecular Weight `[g·mol⁻¹]`
 - `a`: Pair Parameter (`Float64`)
 - `b`: Pair Parameter (`Float64`)
 
@@ -176,6 +176,15 @@ function ab_premixing(model::KUModel,mixing::MixingRule,k,l)
     return a,b
 end
 
+function recombine_mixing!(model::KUModel,mixing_model,k = nothing,l = nothing)
+    recombine!(mixing_model)
+    a,b = ab_premixing(model,mixing_model,k,l)
+    #we set this again just in case
+    model.params.a .= a
+    model.params.b .= b
+    return mixing_model
+end
+
 ab_consts(model::KUModel) = model.params.omega_a.values,model.params.omega_b.values
 
 #only used in premixing
@@ -190,10 +199,6 @@ function p_scale(model::KUModel,z)
     return dot(model.params.Pc.values,z)/sum(z)
 end
 
-kumar_zc(model::KUModel) = only(model.params.Pc.values)*only(model.params.Vc.values)/(R̄*only(model.params.Tc.values))
-
-function x0_crit_pure(model::KUModel)
-    lb_v = lb_volume(model)
-    vc = model.params.Vc.values[1]
-    (1.1, log10(vc))
+function x0_crit_pure(model::KUModel,z)
+    (1.1, log10(dot(model.params.Vc.values,z)/sum(z)))
 end

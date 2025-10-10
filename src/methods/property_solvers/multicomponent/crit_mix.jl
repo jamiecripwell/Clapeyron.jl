@@ -9,7 +9,7 @@ end
 """
     crit_mix(model::EoSModel,z;v0=x=x0_crit_mix(model,z))
 
-Returns the critical mixture point at a ginven composition.
+Returns the critical mixture point at a given composition.
 
 Returns a tuple, containing:
 - Critical Mixture Temperature `[K]`
@@ -42,6 +42,8 @@ function crit_mix(model::EoSModel,z;v0=nothing)
     p_c = pressure(model_r, V_c, T_c, z_r)
     return (T_c, p_c, ∑z*V_c)
 end
+
+
 """
     x0_crit_mix(model::EoSModel,z)
 

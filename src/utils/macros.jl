@@ -3,13 +3,13 @@
 """
     arbitraryparam(params)
 
-returns the first field in the struct that is a subtype of `ClapeyronParam`. errors if it finds none.
+Returns the first field in the struct that is a subtype of `ClapeyronParam`. Errors if it finds none.
 """
 function arbitraryparam(params)
     paramstype = typeof(params)
     idx = findfirst(z->z <: ClapeyronParam,fieldtypes(paramstype))
     if isnothing(idx)
-        error("The paramater struct ", paramstype, " must contain at least one ClapeyronParam")
+        error("The parameter struct ", paramstype, " must contain at least one ClapeyronParam")
     end
      return fieldnames(paramstype)[idx] |> z->getfield(params,z)
 end
@@ -81,7 +81,7 @@ end
 """
     @sum(expr)
 
-a macro that can be used to sum over all the variables in an expression. a faster alternative to `sum(@. expr)`
+A macro that can be used to sum over all the variables in an expression. A faster alternative to `sum(@. expr)`.
 
 ## Example
 ```julia
@@ -259,9 +259,9 @@ end
 This is a data type that contains all the information needed to use an EoS model.
 It also functions as an identifier to ensure that the right functions are called.
 
-You can pass an optional 4th `Bool` argument  indicating if you want to use sites with this model or not. defaults to `true`
+You can pass an optional 4th `Bool` argument  indicating if you want to use sites with this model or not. Defaults to `true`.
 
-You can also pass another optional 5th `Bool` argument indicating if a second order GroupParam (`StructGroupParam`) is used or not. defaults to `false`
+You can also pass another optional 5th `Bool` argument indicating if a second order GroupParam (`StructGroupParam`) is used or not. Defaults to `false`
 
 = Fields =
 The Struct consists of the following fields:
@@ -344,7 +344,7 @@ All group parameters are absent in this struct.
 The sites are associated to the main component rather than the groups,
 and the respective fieldnames are named correspondingly.
 
-You can pass an optional bool indicating if you want to use sites with this model or not. defaults to `true`
+You can pass an optional bool indicating if you want to use sites with this model or not. Defaults to `true`.
 
 ## Example
 ```julia
@@ -439,7 +439,7 @@ end
 """
     @newmodelsingleton name parent
 
-A macro that defines an EoSModel without any fields (\"singleton\" struct.). useful for defining EoS that don't use any parameters, while being composable with other `EoSModels`.
+A macro that defines an EoSModel without any fields (\"singleton\" struct.). Useful for defining EoS that don't use any parameters, while being composable with other `EoSModels`.
 """
 macro newmodelsingleton(name,parent)
     quote
@@ -456,8 +456,8 @@ end
     init_model(model::EoSModel,components,userlocations = String[],verbose = false)
     init_model(::Type{𝕄},components,userlocations = String[],verbose = false) where 𝕄 <: EoSModel
 
-Utility for building simple models. if a model instance is passed, it will return that instance.
-otherwise, it will build the model from the input components and user locations.
+Utility for building simple models. If a model instance is passed, it will return that instance.
+Otherwise, it will build the model from the input components and user locations.
 
 It is normally used for models that don't have additional submodels (like ideal models)
 or when such submodels are not used at all (like the pure model part of an Activity model when used in an Advanced mixing rule Cubic model)
@@ -541,7 +541,7 @@ end
 """
     @registermodel(model)
 
-given an existing model, composed of Clapeyron EoS models, ClapeyronParams or EoSParams, it will generate
+Given an existing model, composed of Clapeyron EoS models, ClapeyronParams or EoSParams, it will generate
 the necessary traits to make the model compatible with Clapeyron routines.
 
 !!! info

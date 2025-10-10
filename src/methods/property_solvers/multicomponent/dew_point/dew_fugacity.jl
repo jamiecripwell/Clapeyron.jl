@@ -11,7 +11,7 @@ Inputs:
 - `modelx`: liquid equation of state model, if any noncondensable compounds are present
 - `modely`: vapour equation of state model
 - `y`: vapour phase composition
-- `T`: temperature [`K`]
+- `T`: temperature `[K]`
 - `vol_cache`: array used to update the phases' volumes
 _ `condensable`: condensable component indices, if any noncondensable compounds are present
 
@@ -40,10 +40,10 @@ systems of equations.
 
 Inputs:
 - `model`: equation of state model
-- `T`: dew temperature [`K`]
+- `T`: dew temperature `[K]`
 - `y`: vapor phase composition
-- `x0`: initial guess for the liquid phase composition
-- `p0`: initial guess for the dew pressure [`Pa`]
+- `x0`: initial guess for the liquid phase composition `[m³]`
+- `p0`: initial guess for the dew pressure `[Pa]`
 - `vol0`: optional, initial guesses for the liquid and vapor phase volumes
 - `itmax_newton`: optional, number of iterations to update the pressure using newton's method
 - `itmax_ss`: optional, number of iterations to update the liquid phase composition using successive substitution
@@ -53,9 +53,9 @@ Inputs:
 - `noncondensables`: optional, Vector of strings containing non condensable compounds. those will be set to zero on the liquid phase.
 
 Returns:
-- `p`: dew pressure
-- `volx`: saturared liquid volume
-- `voly`: saturared vapor volume
+- `p`: dew pressure `[Pa]`
+- `volx`: saturared liquid volume `[m³]`
+- `voly`: saturared vapor volume `[m³]`
 - `x`: saturated liquid composition
 """
 function dew_pressure_fug(model::EoSModel, T, y, x0, p0; vol0=(nothing,nothing),
@@ -67,16 +67,10 @@ function dew_pressure_fug(model::EoSModel, T, y, x0, p0; vol0=(nothing,nothing),
     volx, voly = vol0
 
     #check if noncondensables are set
-    if !isnothing(noncondensables)
-        condensables = [!in(x,noncondensables) for x in model.components]
-        model_x,condensables = index_reduction(model,condensables)
-        x0 = x0[condensables]
-        x0 = x0/sum(x0)
-    else
-        condensables = fill(true,length(model))
-        model_x = nothing
-    end
-
+    condensables = comps_in_equilibria(component_list(model),noncondensables)
+    model_x,_ = index_reduction(model,condensables)
+    x0 = x0[condensables]
+    x0 = x0/sum(x0)
     converged,res = _fug_OF_ss(model_x,model,p0,T,x0,y,vol0,FugEnum.DEW_PRESSURE,condensables;itmax_ss = itmax_ss, itmax_newton = itmax_newton,tol_pT = tol_p, tol_xy = tol_x, tol_of = tol_of)
     p,T,x,y,vol,lnK = res
     volx,voly = vol
@@ -111,8 +105,8 @@ system of equations.
 
 Inputs:
 - `x0 = nothing`: optional, initial guess for the liquid phase composition
-- `p0 = nothing`: optional, initial guess for the dew pressure [`Pa`]
-- `vol0 = nothing`: optional, initial guesses for the liquid and vapor phase volumes
+- `p0 = nothing`: optional, initial guess for the dew pressure `[Pa]`
+- `vol0 = nothing`: optional, initial guesses for the liquid and vapor phase volumes `[m³]`
 - `itmax_newton = 10`: optional, number of iterations to update the pressure using newton's method
 - `itmax_ss = 5`: optional, number of iterations to update the liquid phase composition using successive substitution
 - `tol_x = 1e-8`: optional, tolerance to stop successive substitution cycle
@@ -185,13 +179,8 @@ end
 
 
 function dew_pressure_impl(model::EoSModel, T, y ,method::FugDewPressure)
-    
-    if !isnothing(method.noncondensables)
-        condensables = [!in(x,method.noncondensables) for x in model.components]
-    else
-        condensables = fill(true,length(model))
-    end
-
+    noncondensables = method.noncondensables
+    condensables = comps_in_equilibria(component_list(model),noncondensables)
     _vol0,_p0,_x0 = method.vol0,method.p0,method.x0
     p0,vl,vv,x0 = dew_pressure_init(model,T,y,_vol0,_p0,_x0,condensables)
     itmax_newton = method.itmax_newton
@@ -200,7 +189,7 @@ function dew_pressure_impl(model::EoSModel, T, y ,method::FugDewPressure)
     tol_p = method.tol_p
     tol_of = method.tol_of
     vol0 = (vl,vv)
-    noncondensables = method.noncondensables
+    
     return dew_pressure_fug(model,T,y,x0,p0;vol0,itmax_newton,itmax_ss,tol_x,tol_p,tol_of,noncondensables)
 end
 
@@ -217,7 +206,7 @@ Inputs:
 - `model`: general equation of state model
 - `modelx`: liquid equation of state model, if any noncondensable compounds are present
 - `modely`: vapour equation of state model
-- `P`: pressure [`Pa`]
+- `P`: pressure `[Pa]`
 - `vol_cache`: array used to update the phases' volumes
 _ `condensable`: condensable component indices, if any noncondensable compounds are present
 
@@ -246,11 +235,11 @@ non-linear system of equations.
 
 Inputs:
 model: equation of state model
-- `P`: pressure [`Pa`]
+- `P`: pressure `[Pa]`
 - `y`: vapor phase composition
 - `x0`: initial guess for the liquid phase composition
-- `T0`: initial guess for the dew temperature [`K`]
-- `vol0`: optional, initial guesses for the liquid and vapor phase volumes
+- `T0`: initial guess for the dew temperature `[K]`
+- `vol0`: optional, initial guesses for the liquid and vapor phase volumes `[m³]`
 - `itmax_newton`: optional, number of iterations to update the temperature using newton's method
 - `itmax_ss`: optional, number of iterations to update the liquid phase composition using successive substitution
 - `tol_x`: optional, tolerance to stop successive substitution cycle
@@ -259,9 +248,9 @@ model: equation of state model
 - `noncondensables`: optional, Vector of strings containing non condensable compounds. those will be set to zero on the liquid phase.
 
 Returns:
-`T`: dew temperature
-`volx`: saturared liquid volume
-`voly`: saturared vapor volume
+`T`: dew temperature `[K]`
+`volx`: saturared liquid volume `[m³]`
+`voly`: saturared vapor volume `[m³]`
 `x`: saturated liquid composition
 """
 function dew_temperature_fug(model::EoSModel, p, y, x0, T0; vol0=(nothing,nothing),
@@ -272,15 +261,10 @@ function dew_temperature_fug(model::EoSModel, p, y, x0, T0; vol0=(nothing,nothin
     vol0 === nothing && (vol0 = (nothing,nothing))
     volx, voly = vol0
     #check if noncondensables are set
-    if !isnothing(noncondensables)
-        condensables = [!in(x,noncondensables) for x in model.components]
-        model_x,condensables = index_reduction(model,condensables)
-        x0 = x0[condensables]
-        x0 = x0/sum(x0)
-    else
-        condensables = fill(true,length(model))
-        model_x = nothing
-    end
+    condensables = comps_in_equilibria(component_list(model),noncondensables)
+    model_x,_ = index_reduction(model,condensables)
+    x0 = x0[condensables]
+    x0 = x0/sum(x0)
 
     converged,res = _fug_OF_ss(model_x,model,p,T0,x0,y,vol0,FugEnum.DEW_TEMPERATURE,condensables;itmax_ss = itmax_ss, itmax_newton = itmax_newton, tol_pT = tol_T, tol_xy = tol_x, tol_of = tol_of)
     p,T,x,y,vol,lnK = res
@@ -315,8 +299,8 @@ non-linear system of equations.
 
 Inputs:
 - `x0 = nothing`: optional, initial guess for the liquid phase composition
-- `T0 = nothing`: optional, initial guess for the dew temperature [`K`]
-- `vol0 = nothing`: optional, initial guesses for the liquid and vapor phase volumes
+- `T0 = nothing`: optional, initial guess for the dew temperature `[K]`
+- `vol0 = nothing`: optional, initial guesses for the liquid and vapor phase volumes `[m³]`
 - `itmax_newton = 10`: optional, number of iterations to update the temperature using newton's method
 - `itmax_ss = 5`: optional, number of iterations to update the liquid phase composition using successive substitution
 - `tol_x = 1e-8`: optional, tolerance to stop successive substitution cycle
@@ -387,12 +371,8 @@ function FugDewTemperature(;vol0 = nothing,
 end
 
 function dew_temperature_impl(model::EoSModel, p, y, method::FugDewTemperature)
-    if !isnothing(method.noncondensables)
-        condensables = [!in(x,method.noncondensables) for x in model.components]
-    else
-        condensables = fill(true,length(model))
-    end
-
+    noncondensables = method.noncondensables
+    condensables = comps_in_equilibria(component_list(model),noncondensables)
     _vol0,_T0,_x0 = method.vol0,method.T0,method.x0
     T0,vl,vv,x0 = dew_temperature_init(model,p,y,_vol0,_T0,_x0,condensables)
     itmax_newton = method.itmax_newton
@@ -402,7 +382,6 @@ function dew_temperature_impl(model::EoSModel, p, y, method::FugDewTemperature)
     tol_of = method.tol_of
     vol0 = (vl,vv)
 
-    noncondensables = method.noncondensables
     return dew_temperature_fug(model,p,y,x0,T0;vol0,itmax_newton,itmax_ss,tol_x,tol_T,tol_of,noncondensables)
 end
 

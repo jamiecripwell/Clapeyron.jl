@@ -1,7 +1,7 @@
 """
     translation(model::CubicModel,V,T,z,translation_model::TranslationModel)  
 
-Interface function used in cubic models. it should return a vector of cᵢ. such as `Ṽ = V + mixing(c,z)`
+Interface function used in cubic models. It should return a vector of cᵢ. Such as `Ṽ = V + mixing(c,z)`
 
 ## Example:
 
@@ -18,6 +18,8 @@ end
 ```
 """
 function translation end
+
+translation(model::CubicModel,V,T,z) = translation(model,V,T,z,model.translation)
 
 include("NoTranslation.jl")
 include("Rackett.jl")

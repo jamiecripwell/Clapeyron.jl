@@ -1,36 +1,33 @@
 function __electrolyte_fugacities(model,salts,p,T,m,zsolvent = SA[1.0];sat = false)
-    isolvent = model.icomponents[model.charge.==0]
-    iions = model.icomponents[model.charge.!=0]
+    icomponents = 1:length(model)
+    isolvent = icomponents[model.charge.==0]
+    iions = icomponents[model.charge.!=0]
     
     ν = salt_stoichiometry(model,salts)
     z0 = molality_to_composition(model,salts,ones(length(m)).*1e-20,zsolvent,ν)
     z = molality_to_composition(model,salts,m,zsolvent,ν)
     if sat
-        ions = model.components[model.charge.!=0]
-        method = FugBubblePressure(nonvolatiles=ions)
-        (px,vl,vv,y) = bubble_pressure(model,T,z,method)
+        (px,vl,vv,y) = bubble_pressure(model,T,z)
+        v = vl
     else
         px = p
+        v = volume(model,px,T,z;phase=:l)
     end
 
-    R̄ = Rgas(model)
-
-    v = volume(model,px,T,z;phase=:l)
-    μ = VT_chemical_potential_res(model,v,T,z)./(R̄*T)
-    Z = px*v/R̄/T/sum(z)
-    v0 = volume(model,px,T,z0;phase=:l)
-    μ0 = VT_chemical_potential_res(model,v0,T,z0)./(R̄*T)
-    Z0 = px*v0/R̄/T/sum(z0)
-
-    γ = @. exp(μ-μ0)*Z0/Z
-
+    RT = Rgas(model)*T
+    μ = VT_chemical_potential_res(model,v,T,z)
+    Z = px*v/RT/sum(z)
+    v0 = volume(model,px,T,z0; phase=:l)
+    μ0 = VT_chemical_potential_res(model,v0,T,z0)
+    Z0 = px*v0/RT/sum(z0)
+    γ = @. exp((μ-μ0)/RT)*Z0/Z
     return (z,z0),γ,(isolvent,iions),ν
 end
 
 
 """
     mean_ionic_activity_coefficient_sat(model::ESElectrolyteModel,salts,T,m,zsolvent=[1.])
-Calculate the mean ionic activity coefficient of selection of salts at the saturation point at a certain temperature and molality. These are defined as:
+Calculates the mean ionic activity coefficient of selection of salts at the saturation point at a certain temperature `T` and molality `m`. These are defined as:
 ```
 γ± = φ±/φ±₀ * ∑zsolv/∑z
 ```
@@ -53,7 +50,7 @@ end
 
 """
     mean_ionic_activity_coefficient(model::ESElectrolyteModel,salts,p,T,m,zsolvent=[1.])
-Calculate the mean ionic activity coefficient of selection of salts at a given pressure, temperature and molality. These are defined as:
+Calculates the mean ionic activity coefficient of selection of salts at a given pressure `p`, temperature `T` and molality `m`. These are defined as:
 ```
 γ± = φ±/φ±₀ * ∑zsolv/∑z
 ```
@@ -81,7 +78,7 @@ end
 
 """
     osmotic_coefficient_sat(model::ESElectrolyteModel,salts,T,m,zsolvent=[1.])
-Calculate the osmotic coefficient of selection of solvents at the saturation point at a certain temperature and molality. These are defined as:
+Calculates the osmotic coefficient of selection of solvents at the saturation point at a certain temperature `T` and molality `m`. These are defined as:
 ```
 ϕ = -1/(∑νi*mi*Mw)*log(asolv)
 ```
@@ -104,7 +101,7 @@ end
 
 """
     osmotic_coefficient(model::ESElectrolyteModel,salts,p,T,m,zsolvent=[1.])
-Calculate the osmotic coefficient of selection of solvents at a given pressure, temperature and molality. These are defined as:
+Calculates the osmotic coefficient of selection of solvents at a given pressure, temperature and molality. These are defined as:
 ```
 ϕ = -1/(∑νi*mi*Mw)*log(asolv)
 ```

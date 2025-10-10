@@ -42,25 +42,25 @@ end
     assoc_options = AssocOptions())
 
 ## Input parameters
-- `Mw`: Single Parameter (`Float64`) - Molecular Weight `[g/mol]`
+- `Mw`: Single Parameter (`Float64`) - Molecular Weight `[g·mol⁻¹]`
 - `segment`: Single Parameter (`Float64`) - Number of segments (no units)
-- `sigma`: Single Parameter (`Float64`) - Segment Diameter [`A°`]
-- `epsilon`: Single Parameter (`Float64`) - Reduced dispersion energy  `[K]`
+- `sigma`: Single Parameter (`Float64`) - Segment Diameter `[Å]`
+- `epsilon`: Single Parameter (`Float64`) - Reduced dispersion energy `[K]`
 - `lambda_a`: Pair Parameter (`Float64`) - Atractive range parameter (no units)
 - `lambda_r`: Pair Parameter (`Float64`) - Repulsive range parameter (no units)
-- `k`: Pair Parameter (`Float64`) (optional) - Binary Interaction Paramater (no units)
+- `k`: Pair Parameter (`Float64`) (optional) - Binary Interaction Parameter (no units)
 - `epsilon_assoc`: Association Parameter (`Float64`) - Reduced association energy `[K]`
-- `bondvol`: Association Parameter (`Float64`) - Association Volume
+- `bondvol`: Association Parameter (`Float64`) - Association Volume `[m³]`
 
 ## Model Parameters
-- `Mw`: Single Parameter (`Float64`) - Molecular Weight `[g/mol]`
+- `Mw`: Single Parameter (`Float64`) - Molecular Weight `[g·mol⁻¹]`
 - `segment`: Single Parameter (`Float64`) - Number of segments (no units)
 - `sigma`: Pair Parameter (`Float64`) - Mixed segment Diameter `[m]`
 - `lambda_a`: Pair Parameter (`Float64`) - Atractive range parameter (no units)
 - `lambda_r`: Pair Parameter (`Float64`) - Repulsive range parameter (no units)
 - `epsilon`: Pair Parameter (`Float64`) - Mixed reduced dispersion energy`[K]`
 - `epsilon_assoc`: Association Parameter (`Float64`) - Reduced association energy `[K]`
-- `bondvol`: Association Parameter (`Float64`) - Association Volume
+- `bondvol`: Association Parameter (`Float64`) - Association Volume `[m³]`
 
 ## Input models
 - `idealmodel`: Ideal Model
@@ -105,7 +105,7 @@ function data(model::SAFTVRMieModel, V, T, z)
     return (_d,_ρ_S,ζi,_ζ_X,_ζst,σ3x,m̄)
 end
 
-function packing_fraction(model::SAFTVRMieModel,_data::Tuple)
+function packing_fraction(model::SAFTVRMieModel,_data)
     _,_,ζi,_,_,_,m̄ = _data
     _,_,_,η = ζi
     return η
@@ -117,7 +117,7 @@ end
 
 #fused chain and disp calculation
 function a_res(model::SAFTVRMieModel, V, T, z, _data = @f(data))
-    return @f(a_hs,_data)+@f(a_dispchain,_data) + @f(a_assoc,_data)
+    return @f(a_hs,_data) + @f(a_dispchain,_data) + @f(a_assoc,_data)
 end
 
 function a_mono(model::SAFTVRMieModel, V, T, z,_data = @f(data))

@@ -21,7 +21,7 @@ function volume_impl(model::ActivityModel, p, T, z, phase, threaded, vol0)
         return volume(BasicIdeal(), p, T, z, phase=phase, threaded=threaded, vol0=vol0)
     end
 end
-#for use in models that have gibbs free energy defined.
+#for use in models that have Gibbs energy defined.
 function activity_coefficient(model::ActivityModel,p,T,z)
     X = gradient_type(model,T+p,z)
     return exp.(Solvers.gradient(x->excess_gibbs_free_energy(model,p,T,x),z)/(Rgas(model)*T))::X
@@ -66,7 +66,7 @@ end
 this is technically wrong on the strict sense of helmholtz residual energy,
 but allows us to evaluate the excess terms of an activity model with ease.
 
-The main problem is that activity models are defined in a P-T basis, while the helmholtz energy framework used by Clapeyron requires a V-T basis.
+The main problem is that activity models are defined in a P-T basis, while the Helmholtz energy framework used by Clapeyron requires a V-T basis.
 we circunvent this by using the dispatches on PT_property.
 Activity models are transformed into a GammaPhi wrapper that evaluates the pure and excess parts in a correct way.
 
@@ -134,7 +134,7 @@ __act_to_gammaphi(model::ActivityModel) = __act_to_gammaphi(model,nothing,true)
 GammaPhi(model::ActivityModel) = __act_to_gammaphi(model)
 #convert ActivityModel into a RestrictedEquilibriaModel
 function __act_to_gammaphi(model::ActivityModel,method,ignore = false)
-    components = model.components
+    components = component_list(model)
     if hasfield(typeof(model),:puremodel) && !ignore && model.puremodel.model isa IdealModel
         ActivitySaturationError(model,method)
     end
@@ -142,11 +142,11 @@ function __act_to_gammaphi(model::ActivityModel,method,ignore = false)
     if hasfield(typeof(model),:puremodel)
         pure = model.puremodel
         if pure.model isa CompositeModel
-            pure = EoSVectorParam(pure.model.fluid,model.components)
+            pure = EoSVectorParam(pure.model.fluid,components)
         end
     else
         if ignore
-            pure = EoSVectorParam(BasicIdeal(),model.components)
+            pure = EoSVectorParam(BasicIdeal(),components)
         else
             ActivitySaturationError(model,method)
         end
@@ -208,23 +208,42 @@ function __tpflash_cache_model(model::ActivityModel,p,T,z,equilibrium)
     PTFlashWrapper(compmodel,p,T,equilibrium)
 end
 
-#LLE point. it does not require an imput concentration, because it assumes that activities are pressure-independent.
+#LLE point. It does not require an input concentration, because it assumes that activities are pressure-independent.
+"""
+    LLE(model::ActivityModel, T; v0=nothing)
 
+Calculates the Liquid-Liquid equilibrium compositions at a given temperature `T` in `[K]`.
+
+Returns a tuple, containing:
+- Liquid composition `x₁`
+- Liquid composition `x₂`
+
+`v0` is a vector containing `vcat(x1[1:nc-1],x2[1:nc-1])`.
+"""
 function LLE(model::ActivityModel,T;v0=nothing)
+    nc = length(model)
+    vv0 = zeros(Base.promote_eltype(model,T),2*nc-2)
     if v0 === nothing
-        if length(model) == 2
-        v0 = [0.25,0.75]
+        if nc == 2
+            vv0 .= [0.25,0.75]
         else
             throw(error("unable to provide an initial point for LLE pressure"))
         end
+    else
+        if 2*length(model) == length(v0)
+            vv0[1:nc-1] .= v0[1:nc-1]
+            vv0[nc:end] .= v0[(nc+1):(2*nc-1)]
+        else
+            vv0 .= v0
+        end
     end
-    len = length(v0)
-    Fcache = zeros(eltype(v0),len)
-    f!(F,z) = Obj_LLE(model, F, T, z[1], z[2])
-    r  = Solvers.nlsolve(f!,v0,LineSearch(Newton()))
+
+    len = length(vv0)
+    f!(F,z) = Obj_LLE(model, F, T, @view(z[1:nc-1]), @view(z[nc:end]))
+    r  = Solvers.nlsolve(f!,vv0,LineSearch(Newton()))
     sol = Solvers.x_sol(r)
-    x = sol[1]
-    xx = sol[2]
+    x = FractionVector(sol[1:nc-1]) |> collect
+    xx = FractionVector(sol[nc:end]) |> collect
     return x,xx
 end
 

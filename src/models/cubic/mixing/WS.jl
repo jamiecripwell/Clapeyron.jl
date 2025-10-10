@@ -41,7 +41,7 @@ for Peng-Robinson:
     λ = 1/(2√(2))log((2+√(2))/(2-√(2))) (0.6232252401402305)
 ```
 
-`λ` is a coefficient indicating the relation between `gᴱ` and `gᴱ(cubic)` at infinite pressure. see [1] for more information. it can be customized by defining `WS_λ(::WSRuleModel,::CubicModel)`
+`λ` is a coefficient indicating the relation between `gᴱ` and `gᴱ(cubic)` at infinite pressure. See [1] for more information. It can be customized by defining `WS_λ(::WSRuleModel,::CubicModel)`.
 
 ## Model Construction Examples
 ```
@@ -83,10 +83,10 @@ function WSRule(components; activity = Wilson, userlocations = String[],activity
     return model
 end
 
-WS_λ(::WSRuleModel,model::ABCubicModel,z) = infinite_pressure_gibbs_correction(model,z)
+WS_λ(::WSRuleModel,model::DeltaCubicModel,T,z) = infinite_pressure_gibbs_correction(model,T,z)
 
-function mixing_rule(model::ABCubicModel,V,T,z,mixing_model::WSRuleModel,α,a,b,c)
-    λ = WS_λ(mixing_model,model,z)
+function mixing_rule(model::DeltaCubicModel,V,T,z,mixing_model::WSRuleModel,α,a,b,c)
+    λ = WS_λ(mixing_model,model,T,z)
     n = sum(z)
     invn = (one(n)/n)
     RT⁻¹ = 1/(R̄*T)

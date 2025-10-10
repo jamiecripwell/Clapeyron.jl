@@ -48,7 +48,7 @@ In terms of equations of state available, we have the following default models:
 
 **Cubics**:
 
-- van der Waals ([`vdW`](@ref))
+- Van der Waals ([`vdW`](@ref))
   - Clausius ([`Clausius`](@ref))
   - Berthelot ([`Berthelot`](@ref))
 - Redlich–Kwong ([`RK`](@ref))
@@ -177,6 +177,7 @@ We support the following alpha functions:
 - [`MTAlpha`](@ref): Proposed by Magoulas and Tassios, this alpha function is essentially like the regular PR alpha function only to a higher order.
   It is used within UMRPR.
 - [`Soave2019Alpha`](@ref): Updated soave correlations for `PR` and (s)`RK` models.
+- [`LeiboviciAlpha`](@ref): generalized soave model for any cubic model. Almost equivalent to `SoaveAlpha` for `PR` and `RK` models, but it can also be used by Patel-Teja, RKPR and Patel-Teja-Valderrama cubics.
 
 ## Specifying a mixing rule
 
@@ -189,7 +190,7 @@ model7 = RK(["ethane","propane"];mixing=KayRule)
 
 We currently support:
 
-- [`vdW1fRule`](@ref): The standard van der Waals one-fluid mixing rule which is the default in all cubics.
+- [`vdW1fRule`](@ref): The standard Van der Waals one-fluid mixing rule which is the default in all cubics.
 - [`KayRule`](@ref): Takes an approach closer to the mixing rules used in SAFT.
 - [`HVRule`](@ref): The Huron–Vidal mixing rule with uses information from activity coefficient models to form the mixing rule.
   It is meant to be more accurate than regular mixing rules.
@@ -276,6 +277,7 @@ The functions for the physical properties that we currently support are as follo
   Cp = isobaric_heat_capacity(model, p, T, z)
   betaT = thermal_compressibility(model, p, T, z)
   betaS = isentropic_compressibility(model, p, T, z)
+  adiabatic_index = adiabatic_index(model, p, T, z)
   u = speed_of_sound(model, p, T, z)
   alphaV = isobaric_expansivity(model, p, T, z)
   muJT = joule_thomson_coefficient(model, p, T, z)
@@ -292,7 +294,7 @@ The functions for the physical properties that we currently support are as follo
     V = volume(model, p, T, z; phase=:liquid)
     ```
 
-    The default value is `:unknown` where it will find both the vapour and liquid roots first and determine which has the lowest Gibbs free energy.
+    The default value is `:unknown` where it will find both the vapour and liquid roots first and determine which has the lowest Gibbs energy.
 
   - `threaded`: This determines whether or not to run the vapour and liquid calculations in parallel or not and is only relevant for when the phases are unknown and non-cubic models.
 

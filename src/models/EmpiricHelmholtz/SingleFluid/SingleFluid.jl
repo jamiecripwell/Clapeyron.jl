@@ -40,6 +40,8 @@ function SingleFluidIdeal(model::SingleFluid)
     return SingleFluidIdeal(model.components,model.properties,model.ideal,model.references)
 end
 
+mw(model::SingleFluidIdeal) = SA[model.properties.Mw]
+
 idealmodel(model::SingleFluid) = SingleFluidIdeal(model)
 
 Rgas(model::SingleFluid) = model.properties.Rgas
@@ -99,6 +101,9 @@ function reduced_a_res(ℙ::MultiParameterParam,δ,τ,lnδ = log(δ),lnτ = log(
     #Non-analytical terms
     αᵣ += a_term(ℙ.na,δ,τ,lnδ,lnτ,_0)
 
+    #Double exponential terms.
+    αᵣ += a_term(ℙ.exp2,δ,τ,lnδ,lnτ,_0)
+
     #associating terms.
     αᵣ += a_term(ℙ.assoc,δ,τ,lnδ,lnτ,_0)
 
@@ -113,13 +118,6 @@ function __get_k_alpha0(model)
         R = model.properties.Rgas
         return R0/R
     end
-end
-
-function __set_Rgas(pure,Rgas)
-    components,p,ancillaries,ideal,residual,references = pure.components,pure.properties,pure.ancillaries,pure.ideal,pure.residual,pure.references
-    Mw,Tr,rhor,lb_volume,Tc,Pc,rhoc,Ttp,ptp,rhov_tp,rhol_tp,acentricfactor = p.Mw, p.Tr, p.rhor, p.lb_volume, p.Tc, p.Pc, p.rhoc, p.Ttp, p.ptp, p.rhov_tp, p.rhol_tp, p.acentricfactor
-    properties = ESFProperties(Mw,Tr,rhor,lb_volume,Tc,Pc,rhoc,Ttp,ptp,rhov_tp,rhol_tp,acentricfactor,Rgas)
-    return SingleFluid(components,properties,ancillaries,ideal,residual,references)
 end
 
 function a_ideal(model::SingleFluidIdeal,V,T,z=SA[1.],k = __get_k_alpha0(model))
@@ -249,10 +247,9 @@ function x0_volume_liquid(model::SingleFluid,p,T,z)
     ptp = model.properties.ptp
     (!isfinite(Ttp) | (Ttp < 0)) && (Ttp = 0.4*Tc)
     (!isfinite(ptp) | (ptp < 0)) && (ptp = zero(ptp))
-    return lb_v
-    if p > Pc
+    if p >= Pc
         #supercritical conditions, liquid
-        #https://doi.org/10.1016/j.ces.2018.08.043 gives an aproximation of the pv curve at T = Tc
+        #https://doi.org/10.1016/j.ces.2018.08.043 gives an approximation of the pv curve at T = Tc
         #=
         abs(1 - P/Pc) = abs(1-Vc/V)^(1/Zc)
         abs(1 - P/Pc)^Zc = abs(1-Vc/V)
@@ -267,7 +264,7 @@ function x0_volume_liquid(model::SingleFluid,p,T,z)
         phi = pressure(model,vhi,T,z)
         #we suppose that V < Vc (liquid state), then the volume solver converges really well with this initial guess
         if T >= Tc
-            if phi > p
+            if phi >= p
                 return vhi
             elseif phi <= p <= pressure(model,lb_v,T,z)
                 return volume_bracket_refine(model,p,T,z,lb_v,vhi)
@@ -277,7 +274,6 @@ function x0_volume_liquid(model::SingleFluid,p,T,z)
         else
             #we want two points: psat-vsat and phi-vhi
             #we can interpolate those to calculate an initial volume
-
             vsat = x0_volume_liquid_lowT(model,p,T,z)
             psat = pressure(model,vsat,T,z)
 
@@ -288,7 +284,7 @@ function x0_volume_liquid(model::SingleFluid,p,T,z)
 
             if phi <= p
                 return volume_bracket_refine(model,p,T,z,vhi,lb_v)
-            elseif psat < p < ph
+            elseif psat < p < phi
                 return volume_bracket_refine(model,p,T,z,vhi,vsat)
             else
                 return vsat

@@ -16,7 +16,7 @@ abstract type MonomerIdealModel <: IdealModel end
 
 ## Input parameters
 
-- `Mw`: Single Parameter (`Float64`) - Molecular Weight `[g/mol]`
+- `Mw`: Single Parameter (`Float64`) - Molecular Weight `[g·mol⁻¹]`
 
 ## Model Parameters
 
@@ -57,7 +57,7 @@ function a_ideal(model::MonomerIdealModel, V, T, z)
     res = zero(V+T+first(z))
     for i in @comps
         Mwᵢ = Mw[i]*0.001
-        Λᵢ = h/√(k_B*T*Mwᵢ/N_A)
+        Λᵢ = h/sqrt(k_B*T*Mwᵢ/N_A)
         res += xlogx(z[i],N_A/V*Λᵢ^3)
     end
     return res/sum(z) - 1

@@ -31,14 +31,14 @@ end
 ## Input parameters
 - `Tc`: Single Parameter (`Float64`) - Critical Temperature `[K]`
 - `Pc`: Single Parameter (`Float64`) - Critical Pressure `[Pa]`
-- `Mw`: Single Parameter (`Float64`) - Molecular Weight `[g/mol]`
+- `Mw`: Single Parameter (`Float64`) - Molecular Weight `[g·mol⁻¹]`
 - `k`: Pair Parameter (`Float64`) (optional)
 - `l`: Pair Parameter (`Float64`) (optional)
 
 ## Model Parameters
 - `Tc`: Single Parameter (`Float64`) - Critical Temperature `[K]`
 - `Pc`: Single Parameter (`Float64`) - Critical Pressure `[Pa]`
-- `Mw`: Single Parameter (`Float64`) - Molecular Weight `[g/mol]`
+- `Mw`: Single Parameter (`Float64`) - Molecular Weight `[g·mol⁻¹]`
 - `a`: Pair Parameter (`Float64`)
 - `b`: Pair Parameter (`Float64`)
 ## Input models
@@ -109,7 +109,7 @@ function PR(components;
     params = getparams(formatted_components, ["properties/critical.csv", "properties/molarmass.csv","SAFT/PCSAFT/PCSAFT_unlike.csv"];
         userlocations = userlocations,
         verbose = verbose,
-        ignore_missing_singleparams = __ignored_crit_params(alpha))
+        ignore_missing_singleparams = ["Vc","acentricfactor"])
 
     model = CubicModel(PR,params,formatted_components;
                         idealmodel,alpha,mixing,activity,translation,
@@ -125,17 +125,10 @@ end
 
 default_references(::Type{PR}) = ["10.1021/I160057A011"]
 
-
-function ab_consts(::Type{<:PRModel})
-    return 0.45723552892138218938,0.077796073903888455972
-end
-
-function cubic_Δ(model::PRModel,z)
+@inline function cubic_Δ(::Type{<:PRModel})
     sqrt2 = sqrt(2)
     return (-1+sqrt2,-1-sqrt2)
 end
-
-crit_pure(model::PRModel) = crit_pure_tp(model)
 
 const PR_p = Solvers.ChebyshevRange(
     (0.01701444200703503,0.021799753821513633,0.026585065635992236,0.03615568926494944,0.05529693652286385,0.09357943103869266,0.1701444200703503),

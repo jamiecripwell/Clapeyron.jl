@@ -10,15 +10,15 @@ __type_string(ℙ::Type{EmpiricDepartureValues}) = "Departure"
 
 #for showing in SparseMatrix context.
 Base.zero(x::EmpiricDepartureValues) = zero(typeof(x))
-Base.zero(::Type{EmpiricDepartureValues}) = EmpiricDepartureValues(0.,Float64[],Float64[],Int[],Int[])
+Base.zero(::Type{EmpiricDepartureValues}) = EmpiricDepartureValues(PolExpGaussTerm(),0.0)
 Base.iszero(x::EmpiricDepartureValues) = iszero(x.F)
 
 #for deleting a departure model
 Base.convert(::Type{EmpiricDepartureValues},::Nothing) = zero(EmpiricDepartureValues)
 function Base.show(io::IO,x::EmpiricDepartureValues) 
-    print(io,"aij(")
+    print(io,"aᵢⱼ(")
     Fij = x.F
-    Fij != 0 && print(io,"F=$Fij,")
+    Fij != 0 && print(io,"F = $Fij, ")
     term = x.polexpgauss
     k_pol,k_exp,k_gauss = term.iterators
     l_pol,l_exp,l_gauss = length(k_pol),length(k_exp),length(k_gauss)
@@ -28,7 +28,7 @@ function Base.show(io::IO,x::EmpiricDepartureValues)
     l_pol != 0 && (push!(text,"pow"),push!(vals,l_pol))
     l_exp != 0 &&  (push!(text,"exp"),push!(vals,l_exp))
     l_gauss != 0 && (push!(text,"gauss"),push!(vals,l_gauss))
-    show_pairs(io,text,vals,"=",quote_string = false,pair_separator = ", ",)
+    show_pairs(io,text,vals," = ",quote_string = false,pair_separator = ", ",)
     print(io,")")
 end
 
@@ -37,7 +37,7 @@ end
 
 Creates a departure model for use in a `MultiFluid` model with `EmpiricDeparture`.
 
-If `data` is a `String` and starts with `{` or `[`, it will be recognized as JSON text. the text will be parsed as a file location otherwise. 
+If `data` is a `String` and starts with `{` or `[`, it will be recognized as JSON text. The text will be parsed as a file location otherwise. 
 You can pass a `Dict` or `NamedTuple` if you want to skip the JSON parsing.
 
 ## Examples
@@ -92,7 +92,7 @@ EmpiricDeparture <: MultiFluidDepartureModel
 
 ## Input parameters
 none
-- `F`: Pair Parameter (`Float64`) - binary interaction parameter (no units)
+- `F`: Pair Parameter (`Float64`) - Binary Interaction Parameter (no units)
 - `parameters`: Pair Parameter (`String`) - JSON data containing the departure terms for the binary pair
 
 ## Description

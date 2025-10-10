@@ -8,7 +8,7 @@ abstract type ClapeyronParam end
 """
     EoSParam
 Abstract type corresponding to a container of `ClapeyronParam`s.
-it supposes that all fields are `ClapeyronParam`s.
+It supposes that all fields are `ClapeyronParam`s.
 """
 abstract type EoSParam end
 abstract type ParametricEoSParam{T} <: EoSParam end
@@ -101,10 +101,6 @@ function pack_vectors(x::AbstractVector{<:AbstractVector})
     return PackedVectorsOfVectors.pack(x)
 end
 
-function pack_vectors(x::SparseMatrixCSC{<:AbstractVector})
-    return SparsePackedMofV(x)
-end
-
 function param_length_check(paramtype,name,comp_length,val_length)
     if comp_length != val_length
         throw(DimensionMismatch(string(paramtype) * "(\"$(name)\"): expected length of components ($comp_length) equal to component length in values ($val_length)"))
@@ -143,6 +139,7 @@ include("params/ReferenceState.jl")
 
 
 const SingleOrPair = Union{<:SingleParameter,<:PairParameter}
+
 function Base.show(io::IO,param::SingleOrPair)
     print(io, typeof(param), "(\"", param.name, "\")")
     show(io,param.components)
@@ -162,6 +159,7 @@ end
 
 Base.iterate(param::SingleOrPair) = iterate(param.values)
 Base.iterate(param::SingleOrPair,state) = iterate(param.values,state)
+linearidx(param::SingleOrPair) = linearidx(param.values)
 
 export SingleParam, SiteParam, PairParam, AssocParam, GroupParam
 export AssocOptions

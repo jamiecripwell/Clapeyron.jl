@@ -3,29 +3,36 @@ __get_group_sum_values(group::GroupParam) = group.n_flattenedgroups
 __get_group_sum_values(group::MixedGCSegmentParam) = group.values
 
 function _group_sum!(out,groups,param)
+    _out = SingleOrPair_values(out)
+    _param = SingleOrPair_values(param)
+    out_idx = linearidx(_out)
+    vecparam = diagvalues(param)
     v = __get_group_sum_values(groups)
     for (i,vi) in pairs(v)
-        out[i] = dot(vi,param)
+        _out[out_idx[i]] = dot(vi,vecparam)
     end
     return out
 end
 
 function _group_sum!(out,groups,param::Number)
+    _out = SingleOrPair_values(out)
     v = __get_group_sum_values(groups)
+    out_idx = linearidx(out)
     for (i,vi) in pairs(v)
-        out[i] = sum(vi)*param
+        _out[out_idx[i]] = sum(vi)*param
     end
     return out
 end
 
-function group_sum!(out::SingleParameter,groups,param::SingleParameter)
-    _group_sum!(out.values,groups,param)
+function group_sum!(out::Union{SingleParameter,PairParameter},groups,param::SingleParameter)
+    _group_sum!(diagvalues(out.values),groups,param)
     v = __get_group_sum_values(groups)
     missingvals_comps = out.ismissingvalues
     missingvals_gc = param.ismissingvalues
     #173
     gc = length(v[1])
-    comps = length(out.values)
+    out_idx = linearidx(out.values)
+    comps = length(groups.components)
     for i in 1:comps
         is_missing_i = false
         vi = v[i]
@@ -34,12 +41,12 @@ function group_sum!(out::SingleParameter,groups,param::SingleParameter)
                 is_missing_i = is_missing_i | missingvals_gc[j]
             end
         end
-        missingvals_comps[i] = is_missing_i
+        missingvals_comps[out_idx[i]] = is_missing_i
     end
     return out
 end
 
-function group_sum!(out,groups,param::Nothing)
+function group_sum!(out,groups,::Nothing)
     return _group_sum!(out,groups,true)
 end
 
@@ -83,6 +90,9 @@ function group_sum(groups,param::AbstractVector)
     return group_sum!(out,groups,param)
 end
 
+group_sum(groups,param::AbstractMatrix) = group_sum(groups,diagvalues(param))
+
+
 """
     group_sum(groups::GroupParam,::Nothing)
 
@@ -107,7 +117,7 @@ end
 """
     group_matrix(groups::MixedGCSegmentParam)
 
-returns a matrix of size `(k,i)` with values νₖᵢ. when multiplied with a molar amount, it returns the amount of moles of each group.
+Returns a matrix of size `(k,i)` with values νₖᵢ. When multiplied with a molar amount, it returns the amount of moles of each group.
 """
 function group_matrix(groups::MixedGCSegmentParam)
     vals = groups.values
@@ -223,7 +233,7 @@ end
 """
     mix_segment!(groups::MixedGCSegmentParam,S = ones(length(@groups)),vst = ones(length(@groups)))
 
-modifies implace the field `n_groups_cache` (`μᵢₖ`) in the `GroupParam`:
+Modifies implace the field `n_groups_cache` (`μᵢₖ`) in the `GroupParam`:
 ```
 μᵢₖ = νᵢₖ*Sₖ*vstₖ
 ```
@@ -248,15 +258,17 @@ end
 
 
 function group_pairmean2(groups::GroupParameter,param::PairParam)
-    newvals = group_pairmean2!(groups,copy(param.values))
-    return PairParam(param.name,groups.components,newvals,fill(false,size(newvals)),param.sources,param.sourcecsvs)
+    l_c = length(groups.components)
+    s = ((l_c,l_c))
+    out = zeros(eltype(param.values),s)
+    group_pairmean2!(out,groups,copy(param.values))
+    return PairParam(param.name,groups.components,out,fill(false,s),param.sources,param.sourcecsvs)
 end
 
-function group_pairmean2!(groups,mat)
+function group_pairmean2!(out,groups,mat)
     l_gc = length(groups.flattenedgroups)
     l_c = length(groups.components)
     _0 = zero(eltype(mat))
-    newmat = fill(_0,(l_c,l_c))
     n = groups.n_flattenedgroups
     for i ∈ 1:l_c
         for j ∈ 1:l_c
@@ -268,8 +280,8 @@ function group_pairmean2!(groups,mat)
                     sumn += n[i][k]*n[j][l]
                 end
             end
-            newmat[i,j] = res/sumn
+            out[i,j] = res/sumn
         end
     end
-    return newmat
+    return out
 end

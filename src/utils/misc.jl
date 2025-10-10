@@ -30,6 +30,25 @@ function svec3(x1,x2,x3,opt = true)
     return SVector{3}(V01,V02,V03)
 end
 
+nonzero_extrema(K::SparseArrays.SparseMatrixCSC) = extrema(K.nzval)
+
+function nonzero_extrema(K)
+    _0 = zero(eltype(K))
+    _max = _0
+    _min = _0
+    for k in K
+        _max = max(k,_max)
+        if iszero(_min)
+            _min = k
+        else
+            if !iszero(k)
+            _min = min(_min,k)
+            end
+        end
+    end
+    return _min,_max
+end
+
 """
     _parse_kv(str,dlm)
 
@@ -52,7 +71,7 @@ DOI2BIB_CACHE = Dict{String,String}()
 """
     doi2bib(doi::String)
 
-given a DOI identifier, returns a BibTeX entry. requires an internet connection. if the value is not found, returns an empty string. results are cached in `Clapeyron.DOI2BIB_CACHE`
+Given a DOI identifier, returns a BibTeX entry. Requires an internet connection. If the value is not found, returns an empty string. Results are cached in `Clapeyron.DOI2BIB_CACHE`
 
 ## Example
 

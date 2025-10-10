@@ -8,7 +8,7 @@ abstract type SaturationModel <: EoSModel end
 """
     SaturationCorrelation <: SaturationMethod
 
-saturation method used for dispatch on saturation correlations.
+Saturation method used for dispatch on saturation correlations.
 """
 struct SaturationCorrelation <: SaturationMethod end
 
@@ -44,4 +44,5 @@ end
 
 include("LeeKeslerSat/LeeKeslerSat.jl")
 include("DIPPR101Sat/DIPPR101Sat.jl")
+include("AntoineSat/AntoineEqSat.jl")
 include("PolExpSat/PolExpSat.jl")

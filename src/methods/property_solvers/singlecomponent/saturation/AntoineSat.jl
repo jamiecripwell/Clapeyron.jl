@@ -10,7 +10,7 @@
                         crit = nothing,
                         crit_retry = false)
 
-Saturation method for `saturation_temperature` .Default method for saturation temperature from Clapeyron 0.3.7. It solves the Volume-Temperature system of equations for the saturation condition.
+Saturation method for `saturation_temperature`. Default method for saturation temperature from Clapeyron 0.3.7. It solves the Volume-Temperature system of equations for the saturation condition.
 
 If only `T0` is provided, `vl` and `vv` are obtained via [`x0_sat_pure`](@ref). If `T0` is not provided, it will be obtained via [`x0_saturation_temperature`](@ref). It is recommended to overload `x0_saturation_temperature`, as the default starting point calls [`crit_pure`](@ref), resulting in slower than ideal times.
 `f_limit`, `atol`, `rtol`, `max_iters` are passed to the non linear system solver.
@@ -50,19 +50,6 @@ function AntoineSaturation(;T0 = nothing,
     else
         throw(error("invalid specification of AntoineSaturation"))
     end
-end
-
-function Obj_Sat_Temp(model::EoSModel, T, V_l, V_v,p,scales)
-    fun(_V) = eos(model, _V, T,SA[1.])
-    A_l,Av_l = Solvers.f∂f(fun,V_l)
-    A_v,Av_v =Solvers.f∂f(fun,V_v)
-    g_l = muladd(-V_l,Av_l,A_l)
-    g_v = muladd(-V_v,Av_v,A_v)
-    (p_scale,μ_scale) = scales
-    F1 = -(Av_l+p)*p_scale
-    F2 = -(Av_v+p)*p_scale
-    F3 = (g_l-g_v)*μ_scale
-    return SVector(F1,F2,F3)
 end
 
 function saturation_temperature_impl(model,p,method::AntoineSaturation{TT,VV,CC}) where {TT,VV,CC}

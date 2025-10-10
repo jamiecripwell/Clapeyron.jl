@@ -1,3 +1,20 @@
+"""
+
+    EoSModel
+
+Root type for all equation of state (EOS) models in Clapeyron.jl. 
+    
+Subtypes of `EoSModel` represent specific equations of state (e.g., cubic, SAFT, activity coefficient models) 
+and must implement their core interface methods.
+
+By default, `EoSModel` subtypes are considered to be helmholtz-based EoS, and as such, they must implement their core interface methods:
+
+- [`a_res`](@ref): An implementation of the reduced residual Helmholtz energy
+- [`lb_volume`](@ref): Lower bound volume for the equation of state
+- [`T_scale`](@ref): A temperature scaling factor.
+
+Other `EoSModel` subtypes may have other interfaces (like activity models or volume-based models).
+"""
 abstract type EoSModel end
 
 function eos_impl(model::EoSModel,V,T,z)
@@ -24,18 +41,19 @@ Rgas() = R̄
 
 """
     eos(model::EoSModel, V, T, z=SA[1.0])
-Returns the total Helmholtz free energy.
+
+Returns the total Helmholtz energy.
 # Inputs:
 - `model::EoSModel` Thermodynamic model to evaluate
-- `V` Total volume, in [m³]
-- `T` Temperature, in [K]
-- `z` mole amounts, in [mol], by default is `@SVector [1.0]`
+- `V` Total volume, in `[m³]`
+- `T` Temperature, in `[K]`
+- `z` mole amounts, in `[mol]`, by default is `@SVector [1.0]`
 # Outputs:
-- Total Helmholtz free energy, in [J]
-by default, it calls `R̄*T*∑(z)*(a_ideal(ideal_model,V,T,z) + a_res(model,V,T,z))` where `ideal_model == idealmodel(model)`, where `a_res` is the reduced residual Helmholtz energy and `a_ideal` is the reduced ideal Helmholtz energy.
+- Total Helmholtz energy, in `[J]`.
+By default, it calls `R̄*T*∑(z)*(a_ideal(ideal_model,V,T,z) + a_res(model,V,T,z))` where `ideal_model == idealmodel(model)`, where `a_res` is the reduced residual Helmholtz energy and `a_ideal` is the reduced ideal Helmholtz energy.
 You can mix and match ideal models if you provide:
-- `[idealmodel](@ref)(model)`: extracts the ideal model from your Thermodynamic model
-- `[a_res](@ref)(model,V,T,z)`: residual reduced Helmholtz free energy
+- `[idealmodel](@ref)(model)`: extracts the ideal model from your Thermodynamic model.
+- `[a_res](@ref)(model,V,T,z)`: residual reduced Helmholtz energy.
 """
 function eos(model::EoSModel, V, T, z::AbstractVector = SA[1.0])
     return eos_impl(model,V,T,z)
@@ -46,7 +64,7 @@ eos(model::EoSModel, V, T, z::Number) = eos(model, V, T, SA[z])
 """
     idealmodel(model::EoSModel)
 
-retrieves the ideal model from the input's model. if the model is already an idealmodel, return `nothing`
+Retrieves the ideal model from the input's model. If the model is already an idealmodel, return `nothing`
 # Examples:
 ```julia-repl
 julia> pr = PR(["water"],idealmodel = MonomerIdeal)
@@ -73,31 +91,32 @@ end
 
 """
     eos_res(model::EoSModel, V, T, z=SA[1.0])
-Returns the residual Helmholtz free energy.
+
+Returns the residual Helmholtz energy.
 # Inputs:
 - `model::EoSModel` Thermodynamic model to evaluate
-- `V` Total volume, in [m³]
-- `T` Temperature, in [K]
-- `z` mole amounts, in [mol], by default is `@SVector [1.0]`
+- `V` Total volume, in `[m³]`
+- `T` Temperature, in `[K]`
+- `z` mole amounts, in `[mol]`, by default is `@SVector [1.0]`
 # Outputs:
-- Residual Helmholtz free energy, in [J]
-by default, it calls `R̄*T*∑(z)*(a_res(model,V,T,z))` where [`a_res`](@ref) is the reduced residual Helmholtz energy.
+- Residual Helmholtz energy, in `[J]`.
+By default, it calls `R̄*T*∑(z)*(a_res(model,V,T,z))` where [`a_res`](@ref) is the reduced residual Helmholtz energy.
 """
 function eos_res(model::EoSModel, V, T, z=SA[1.0])
     return Rgas(model)*sum(z)*T*a_res(model,V,T,z)
 end
 
-
 """
     a_res(model::EoSModel, V, T, z,args...)
-Reduced residual Helmholtz free energy.
+
+Returns reduced residual Helmholtz energy.
 # Inputs:
 - `model::EoSModel` Thermodynamic model to evaluate
-- `V` Total volume, in [m³]
-- `T` Temperature, in [K]
-- `z` mole amounts, in [mol], by default is `@SVector [1.0]`
+- `V` Total volume, in `[m³]`
+- `T` Temperature, in `[K]`
+- `z` mole amounts, in `[mol]`, by default is `@SVector [1.0]`
 # Outputs:
-- Residual Helmholtz free energy, no units
+- Residual Helmholtz energy, no units.
 You can define your own EoS by adding a method to `a_res` that accepts your custom model.
 """
 function a_res end
@@ -116,27 +135,22 @@ end
 Base.summary(model::EoSModel) = string(parameterless_type(model))
 
 """
+    component_list(model)::AbstractVector{String}
+
+Function that returns a list with the components used in the input `EoSModel`.
+"""
+component_list(model) = model.components
+
+"""
     @comps
 
-This macro is an alias to `1:length(model)`
+This macro is an alias to `1:length(model)`.
 The caveat is that `model` has to exist in the local namespace.
 `model` is expected to any struct that has length defined in terms of the amount of components.
 """
 macro comps()
     return quote
         1:length(model)
-    end |> esc
-end
-
-"""
-    R̄
-
-This macro is an alias to `Rgas(model)`
-The caveat is that `model` has to exist in the local namespace.
-"""
-macro R̄()
-    return quote
-        Rgas(model)
     end |> esc
 end
 
@@ -198,7 +212,7 @@ end
 """
     default_references(::Type{<:EoSModel})::Vector{String}
 
-Return the default references of a model. If you are using the `@newmodel`, `@newmodelsimple` or `@newmodelgc` macros, define this function to set the references for the defined EoS.
+Returns the default references of a model. If you are using the `@newmodel`, `@newmodelsimple` or `@newmodelgc` macros, define this function to set the references for the defined EoS.
 
 """
 function default_references end
@@ -260,7 +274,7 @@ end
 
 """
     recombine!(model::EoSModel)
-Recalculate all mixing rules, combining rules and parameter caches inside an `EoSModel`.
+Recalculates all mixing rules, combining rules and parameter caches inside an `EoSModel`.
 """
 function recombine! end
 
@@ -270,4 +284,12 @@ function setreferences!(model,references)
     oldrefs .= references
 end
 
-export EoSModel, eos, has_groups, has_sites, Rgas
+"""
+    Clapeyron∂Tag{X}
+
+Clapeyron's `ForwardDiff.jl` custom tag.
+"""
+struct Clapeyron∂Tag{X} end
+const ∂Tag = Clapeyron∂Tag
+
+export EoSModel, eos, has_groups, has_sites, Rgas, Clapeyron∂Tag

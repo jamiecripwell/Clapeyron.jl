@@ -37,21 +37,21 @@ end
     assoc_options = AssocOptions())
 
 ## Input parameters
-- `Mw`: Single Parameter (`Float64`) - Molecular Weight `[g/mol]`
+- `Mw`: Single Parameter (`Float64`) - Molecular Weight `[g·mol⁻¹]`
 - `segment`: Single Parameter (`Float64`) - Number of segments (no units)
-- `sigma`: Single Parameter (`Float64`) - Segment Diameter [`A°`]
-- `epsilon`: Single Parameter (`Float64`) - Reduced dispersion energy  `[K]`
-- `k`: Pair Parameter (`Float64`) (optional) - Binary Interaction Paramater (no units)
+- `sigma`: Single Parameter (`Float64`) - Segment Diameter `[Å]`
+- `epsilon`: Single Parameter (`Float64`) - Reduced dispersion energy `[K]`
+- `k`: Pair Parameter (`Float64`) (optional) - Binary Interaction Parameter (no units)
 - `epsilon_assoc`: Association Parameter (`Float64`) - Reduced association energy `[K]`
-- `bondvol`: Association Parameter (`Float64`) - Association Volume `[m^3]`
+- `bondvol`: Association Parameter (`Float64`) - Association Volume `[m³]`
 
 ## Model Parameters
-- `Mw`: Single Parameter (`Float64`) - Molecular Weight `[g/mol]`
+- `Mw`: Single Parameter (`Float64`) - Molecular Weight `[g·mol⁻¹]`
 - `segment`: Single Parameter (`Float64`) - Number of segments (no units)
 - `sigma`: Pair Parameter (`Float64`) - Mixed segment Diameter `[m]`
 - `epsilon`: Pair Parameter (`Float64`) - Mixed reduced dispersion energy`[K]`
 - `epsilon_assoc`: Association Parameter (`Float64`) - Reduced association energy `[K]`
-- `bondvol`: Association Parameter (`Float64`) - Association Volume
+- `bondvol`: Association Parameter (`Float64`) - Association Volume `[m³]`
 
 ## Input models
 - `idealmodel`: Ideal Model
@@ -110,7 +110,7 @@ function a_LJ(model::softSAFTModel, V, T, z,_data = @f(data))
     T_inv3 = 1/T3
     T_inv4 = 1/T4
 
-    a1 = x[1]*T̄ + x[2]*√(T̄) + x[3] + x[4]*T_inv + x[5]*T_inv2
+    a1 = x[1]*T̄ + x[2]*sqrt(T̄) + x[3] + x[4]*T_inv + x[5]*T_inv2
     a2 = x[6]*T̄ + x[7] + x[8]*T_inv + x[9]*T_inv2
     a3 = x[11] + x[10]*T̄ + x[12]*T_inv
     a4 = x[13]
@@ -141,29 +141,6 @@ function a_LJ(model::softSAFTModel, V, T, z,_data = @f(data))
     bG = b1*G1 + b2*G2 + b3*G3 + b4*G4 + b5*G5 + b6*G6
     ā = (a1,a2/2,a3/3,a4/4,a5/5,a6/6,a7/7,a8/8)
     return m̄*(evalpoly(ρ̄,ā)*ρ̄ + bG)*T_inv
-end
-
-function ϵ_m(model::softSAFTModel, V, T, z)
-    comps = @comps
-    ϵ = model.params.epsilon.values
-    σ = model.params.sigma.values
-    m = model.params.segment.values
-    return sum(m[i]*m[j]*z[i]*z[j]*σ[i,j]^3*ϵ[i,j] for i ∈ comps for j ∈ comps)/sum(m[i]*m[j]*z[i]*z[j]*σ[i,j]^3 for i ∈ comps for j ∈ comps)
-end
-
-function σ_m(model::softSAFTModel, V, T, z)
-    comps = @comps
-    σ = model.params.sigma.values
-    m = model.params.segment.values
-    return (sum(m[i]*m[j]*z[i]*z[j]*σ[i,j]^3 for i ∈ comps for j ∈ comps)/sum(m[i]*m[j]*z[i]*z[j] for i ∈ comps for j ∈ comps))^(1/3)
-end
-
-function ρ_S(model::softSAFTModel, V, T, z)
-    ∑z = ∑(z)
-    N = N_A*∑z
-    m = model.params.segment.values
-    m̄ = dot(z,m)/∑z
-    return N/V*m̄
 end
 
 function a_chain(model::softSAFTModel, V, T, z,_data = @f(data))
@@ -219,3 +196,27 @@ const softSAFTconsts =
       -0.7957312  0.7187330 -0.9678804   0.2431675 -0.01644710;
       -0.9399577   2.314054 -0.4877045  0.03932058 -0.1600850e-2],
 )
+
+#=
+function ϵ_m(model::softSAFTModel, V, T, z)
+    comps = @comps
+    ϵ = model.params.epsilon.values
+    σ = model.params.sigma.values
+    m = model.params.segment.values
+    return sum(m[i]*m[j]*z[i]*z[j]*σ[i,j]^3*ϵ[i,j] for i ∈ comps for j ∈ comps)/sum(m[i]*m[j]*z[i]*z[j]*σ[i,j]^3 for i ∈ comps for j ∈ comps)
+end
+
+function σ_m(model::softSAFTModel, V, T, z)
+    comps = @comps
+    σ = model.params.sigma.values
+    m = model.params.segment.values
+    return (sum(m[i]*m[j]*z[i]*z[j]*σ[i,j]^3 for i ∈ comps for j ∈ comps)/sum(m[i]*m[j]*z[i]*z[j] for i ∈ comps for j ∈ comps))^(1/3)
+end
+
+function ρ_S(model::softSAFTModel, V, T, z)
+    ∑z = ∑(z)
+    N = N_A*∑z
+    m = model.params.segment.values
+    m̄ = dot(z,m)/∑z
+    return N/V*m̄
+end =#

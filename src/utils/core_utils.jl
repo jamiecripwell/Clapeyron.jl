@@ -3,7 +3,7 @@ Base.@assume_effects :foldable __parameterless_type(T) = Base.typename(T).wrappe
 
 """
     parameterless_type(x)
-given a type or instance of type, it will return the type without any parameters attached.
+Given a type or instance of type, it will return the type without any parameters attached.
 ## Examples:
 ```julia-repl
 julia> Clapeyron.parameterless_type(Vector{Float64})
@@ -79,7 +79,8 @@ show_default(io::IO,mime::MIME"text/plain",arg) = Base.show_default(io,arg)
 
 function show_as_namedtuple(io::IO,x)
     compact_io = IOContext(io, :compact => true)
-    print(io,typeof(x).name.name,"(")
+    print(io,parameterless_type(x))
+    print(io,"(")
     names = fieldnames(typeof(x))
     l = length(names)
     equal = " = "

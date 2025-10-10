@@ -20,7 +20,7 @@ end
 
 """
     xlogx(x::Real,k = one(x))
-Return `x * log(k*x)` for `x ≥ 0`, handling ``x = 0`` by taking the downward limit.
+Returns `x * log(k*x)` for `x ≥ 0`, handling ``x = 0`` by taking the downward limit.
 
 copied from LogExpFunctions.jl
 """
@@ -89,10 +89,4 @@ function sqrtp1(x)
 end
 export bmcs_hs,xlogx
 
-function testxx()
-    for x in -10:10
-        dx = cbrtp1(x) - cbrt(x+1)
-        println(dx)
-    end
-end
 end #module

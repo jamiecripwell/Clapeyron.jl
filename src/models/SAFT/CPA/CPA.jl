@@ -71,24 +71,24 @@ end
         assoc_options = AssocOptions())
 
 ## Input parameters
-- `Mw`: Single Parameter (`Float64`) - Molecular Weight `[g/mol]`
+- `Mw`: Single Parameter (`Float64`) - Molecular Weight `[g·mol⁻¹]`
 - `Tc`: Single Parameter (`Float64`) - Critical Temperature `[K]`
-- `a`: Single Parameter (`Float64`) - Atraction parameter `[m^6*Pa/mol]`
-- `b`: Single Parameter (`Float64`) - Covolume `[m^3/mol]`
+- `a`: Single Parameter (`Float64`) - Atraction parameter `[m⁶·Pa·mol⁻¹]`
+- `b`: Single Parameter (`Float64`) - Covolume `[m³·mol⁻¹]`
 - `c1`: Single Parameter (`Float64`) - α-function constant Parameter (no units)
-- `k`: Pair Parameter (`Float64`) (optional) - Binary Interaction Paramater (no units)
-- `l`: Pair Parameter (`Float64`) (optional) - Binary Interaction Paramater (no units)
+- `k`: Pair Parameter (`Float64`) (optional) - Binary Interaction Parameter (no units)
+- `l`: Pair Parameter (`Float64`) (optional) - Binary Interaction Parameter (no units)
 - `epsilon_assoc`: Association Parameter (`Float64`) - Reduced association energy `[K]`
-- `bondvol`: Association Parameter (`Float64`) - Association Volume `[m^3]`
+- `bondvol`: Association Parameter (`Float64`) - Association Volume `[m³]`
 
 ## Model Parameters
-- `Mw`: Single Parameter (`Float64`) - Molecular Weight `[g/mol]`
+- `Mw`: Single Parameter (`Float64`) - Molecular Weight `[g·mol⁻¹]`
 - `Tc`: Single Parameter (`Float64`) - Critical Temperature `[K]`
-- `a`: Pair Parameter (`Float64`) - Mixed Atraction Parameter `[m^6*Pa/mol]`
-- `b`: Pair Parameter (`Float64`) - Mixed Covolume `[m^3/mol]`
+- `a`: Pair Parameter (`Float64`) - Mixed Atraction Parameter `[m⁶·Pa·mol⁻¹]`
+- `b`: Pair Parameter (`Float64`) - Mixed Covolume `[m³·mol⁻¹]`
 - `c1`: Single Parameter (`Float64`) - α-function constant Parameter (no units)
-- `epsilon_assoc`: Association Parameter (`Float64`) - Reduced association energy `[J]`
-- `bondvol`: Association Parameter (`Float64`) - Association Volume `[m^3]`
+- `epsilon_assoc`: Association Parameter (`Float64`) - Reduced association energy `[K]`
+- `bondvol`: Association Parameter (`Float64`) - Association Volume `[m³·mol⁻¹]`
 
 ## Input models
 - `idealmodel`: Ideal Model
@@ -233,11 +233,15 @@ end
 lb_volume(model::CPAModel,T,z) = lb_volume(model.cubicmodel,T,z)
 T_scale(model::CPAModel,z) = T_scale(model.cubicmodel,z)
 
+ab_consts(model::CPAModel) = ab_consts(model.cubicmodel)
+ab_consts(model::CPAModel,z) = ab_consts(model.cubicmodel,z)
+ab_consts(::Type{T}) where T <: CPAModel = ab_consts(fieldtype(T,:cubicmodel))
+
 function p_scale(model::CPAModel,z)
     #does not depend on Pc, so it can be made optional on CPA input
     b = model.cubicmodel.params.b.values
     a = model.cubicmodel.params.a.values
-    Ωa,Ωb = ab_consts(model.cubicmodel)
+    Ωa,Ωb = ab_consts(model,z)
     b̄r = dot(z,b,z)/(sum(z)*Ωb)
     ār = dot(z,a,z)/Ωa
     return ār/(b̄r*b̄r)
@@ -257,10 +261,9 @@ function show_info(io,model::CPAModel)
     end
 end
 
-function x0_crit_pure(model::CPAModel)
-    z = SA[1.0]
+function x0_crit_pure(model::CPAModel,z)
     T = T_scale(model,z)
-    lb_v = lb_volume(model,T,z)
+    lb_v = lb_volume(model,T,z)/sum(z)
     return (1.0, log10(lb_v/0.3))
 end
 
@@ -318,11 +321,8 @@ data(model::CPAModel, V, T, z) = data(model.cubicmodel,V,T,z)
 
 function a_res(model::CPAModel, V, T, z, _data = @f(data))
     n,ā,b̄,c̄ = _data
-    return a_res(model.cubicmodel,V,T,z,_data) + a_assoc(model,V+c̄*n,T,z,_data)
+    return a_res(model.cubicmodel,V,T,z,_data) + a_assoc(model,V + c̄*n,T,z,_data)
 end
-
-ab_consts(model::CPAModel) = ab_consts(model.cubicmodel)
-ab_consts(::Type{T}) where T <: CPAModel = ab_consts(fieldtype(T,:cubicmodel))
 
 function Δ(model::CPAModel, V, T, z, i, j, a, b, _data = @f(data))
     n,ā,b̄,c̄ = _data
@@ -331,12 +331,12 @@ function Δ(model::CPAModel, V, T, z, i, j, a, b, _data = @f(data))
     b = model.params.b.values
     η = n*b̄/(4*V)
     rdf = model.radial_dist
-    g = if rdf == :CS #CPA original
-        (1-0.5*η)/(1-η)^3
+    if rdf == :CS #CPA original
+        g = (1-0.5*η)/(1-η)^3
     elseif rdf == :KG #sCPA
-        1/(1-1.9η)
+        g = 1/(1-1.9η)
     else
-        zero(η)/zero(η)
+        g = zero(η)/zero(η)
     end
 
     return g*expm1(ϵ_associjab/T)*βijab*b[i,j]/N_A
@@ -349,12 +349,12 @@ function  Δ(model::CPAModel, V, T, z,_data=@f(data))
     b_cubic = model.params.b.values
     η = n*b̄/(4*V)
     rdf = model.radial_dist
-    g = if rdf == :CS #CPA original
-        (1-0.5*η)/(1-η)^3
+    if rdf == :CS #CPA original
+        g = (1-0.5*η)/(1-η)^3
     elseif rdf == :KG #sCPA
-        1/(1-1.9η)
+        g = 1/(1-1.9η)
     else
-        zero(η)/zero(η)
+        g = zero(η)/zero(η)
     end
     Δout = assoc_similar(β,typeof(V+T+first(z)+one(eltype(model))))
     ϵ_assoc = model.params.epsilon_assoc

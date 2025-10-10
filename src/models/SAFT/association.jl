@@ -138,7 +138,13 @@ function Δ(model::EoSModel, V, T, z)
     return Δout
 end
 
-function __delta_assoc(model,V,T,z,data::M) where M
+"""
+    delta_assoc(model,V,T,z,data)
+
+equivalent to `Δ(model,V,T,z)`, but additionally, performs runtime mixing of `Δ[i,j][a,b]` values if specified via `assoc_options`.
+
+"""
+function delta_assoc(model,V,T,z,data::M) where M
     if data === nothing
         delta = Δ(model,V,T,z)
     else
@@ -196,26 +202,7 @@ function inverse_index(idxs,o)
     return i,a
 end
 
-nonzero_extrema(K::SparseArrays.SparseMatrixCSC) = extrema(K.nzval)
-
-function nonzero_extrema(K)
-    _0 = zero(eltype(K))
-    _max = _0
-    _min = _0
-    for k in K
-        _max = max(k,_max)
-        if iszero(_min)
-            _min = k
-        else
-            if !iszero(k)
-            _min = min(_min,k)
-            end
-        end
-    end
-    return _min,_max
-end
-
-function assoc_site_matrix(model,V,T,z,data = nothing,delta = @f(__delta_assoc,data))
+function assoc_site_matrix(model,V,T,z,data = nothing,delta = @f(delta_assoc,data))
     options = assoc_options(model)
     return dense_assoc_site_matrix(model,V,T,z,data,delta)
 end
@@ -246,7 +233,7 @@ function elliott_runtime_mix!(Δ)
     return Δ
 end
 
-function dense_assoc_site_matrix(model,V,T,z,data=nothing,delta = @f(__delta_assoc,data))
+function dense_assoc_site_matrix(model,V,T,z,data=nothing,delta = @f(delta_assoc,data))
     sitesparam = getsites(model)
     _sites = sitesparam.n_sites
     p = _sites.p
@@ -352,7 +339,7 @@ function X_and_Δ(model::EoSModel, V, T, z,data = nothing)
     nn = assoc_pair_length(model)
     isone(nn) && return X_and_Δ_exact1(model,V,T,z,data)
     options = assoc_options(model)::AssocOptions
-    _Δ = __delta_assoc(model,V,T,z,data)
+    _Δ = delta_assoc(model,V,T,z,data)
     #K = assoc_site_matrix(model,primalval(V),T,primalval(z),data,primalval(_Δ))
     K = assoc_site_matrix(model,V,T,z,data,_Δ)
     sitesparam = getsites(model)
@@ -845,6 +832,25 @@ function recombine_assoc!(model,sigma)
     copyto!(model.params.epsilon_assoc,epsilon_assoc)
     copyto!(model.params.bondvol,bondvol)
     return model
+end
+
+function assoc_matrix_solve_pure(K,idx,options)
+    n = LinearAlgebra.checksquare(K) #size
+    #initialization procedure:
+    j = length(idx) - 1
+    X = Vector{T}(undef,n)
+    for i in 1:j
+        v = idx[i]:idx[i+1]-1
+        Xi = @view X[v]
+        Ki = @view K[v,v]
+        _,success = assoc_matrix_x0!(Ki,Xi)
+        if !success
+            res = assoc_matrix_solve(copy(Ki),options)
+            Xi .= res
+        end
+        
+    end
+    return X
 end
 #=
 

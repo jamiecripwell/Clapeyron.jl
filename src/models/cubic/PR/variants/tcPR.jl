@@ -12,7 +12,7 @@
     estimate_alpha = true,
     estimate_translation = true)
 
-translated and consistent Peng Robinson equation of state. it uses the following models:
+Translated and consistent Peng Robinson equation of state. It uses the following models:
 - Translation Model: [`ConstantTranslation`](@ref)
 - Alpha Model: [`TwuAlpha`](@ref)
 - Mixing Rule Model: [`vdW1fRule`](@ref)
@@ -119,7 +119,7 @@ function tcPR(components;
             if cc.ismissingvalues[i] 
                 
                 Tci = Tc[i]
-                Pci = Pc[i]
+                Pci = pc[i]
                 R = Rgas()
                 RTp = (R*Tci/Pci)
                 if zra !== nothing && !zra.ismissingvalues[i]

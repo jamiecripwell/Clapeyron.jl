@@ -12,8 +12,8 @@ abstract type SaturationMethod <: ThermodynamicMethod end
     saturation_pressure(model::EoSModel,T,method::SaturationMethod)
     saturation_pressure(model,T,x0::Union{Tuple,Vector})
 
-Performs a single component saturation equilibrium calculation, at the specified temperature `T`, of one mol of pure sustance specified by `model`
-Returns `(p₀, Vₗ, Vᵥ)` where `p₀` is the saturation pressure (in Pa), `Vₗ` is the liquid saturation volume (in m³) and `Vᵥ` is the vapour saturation volume (in m³).
+Performs a single component saturation equilibrium calculation, at the specified temperature `T`, of one mol of pure sustance specified by `model`.
+Returns `(p₀, Vₗ, Vᵥ)` where `p₀` is the saturation pressure (in `[Pa]`), `Vₗ` is the liquid saturation volume (in `[m³]`) and `Vᵥ` is the vapour saturation volume (in `[m³]`).
 
 If the calculation fails, returns  `(NaN, NaN, NaN)`
 
@@ -112,9 +112,8 @@ end
     saturation_temperature(model::EoSModel, p, method::SaturationMethod)
     saturation_temperature(model, p, T0::Number)
 
-Performs a single component saturation temperature equilibrium calculation, at the specified pressure `T`, of one mol of pure sustance specified by `model`
-
-Returns `(T₀, Vₗ, Vᵥ)` where `p₀` is the saturation Temperature (in K), `Vₗ` is the liquid saturation volume (in m³) and `Vᵥ` is the vapour saturation volume (in m³).
+Performs a single component saturation temperature equilibrium calculation, at the specified temperature `T`, of one mol of pure sustance specified by `model`.
+Returns `(T₀, Vₗ, Vᵥ)` where `T₀` is the saturation Temperature (in `[K]`), `Vₗ` is the liquid saturation volume (in `[m³]`) and `Vᵥ` is the vapour saturation volume (in `[m³]`).
 
 If the calculation fails, returns  `(NaN, NaN, NaN)`
 
@@ -207,7 +206,7 @@ include("AntoineSat.jl")
 """
     enthalpy_vap(model::EoSModel, T,method = ChemPotVSaturation(x0_sat_pure(model,T)))
 
-Calculates `ΔH`, the difference between saturated vapour and liquid enthalpies at temperature `T`, in J
+Calculates `ΔH`, the difference between saturated vapour and liquid enthalpies at temperature `T` `[K]`, in `[J]`
 """
 function enthalpy_vap(model::EoSModel, T,satmethod = ChemPotVSaturation())
     single_component_check(enthalpy_vap,model)
@@ -222,7 +221,7 @@ end
 """
     acentric_factor(model::EoSModel;crit = crit_pure(model), satmethod = ChemPotVSaturation())
 
-calculates the acentric factor using its definition:
+Calculates the acentric factor using its definition:
 ```
 ω = -log10(psatᵣ) -1, at Tᵣ = 0.7
 ```

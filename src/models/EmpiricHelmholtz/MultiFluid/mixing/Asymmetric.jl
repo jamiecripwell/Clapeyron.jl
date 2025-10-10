@@ -15,10 +15,10 @@ end
     verbose = false)
 
 ## Input parameters
-- `beta_v`: Pair Parameter (`Float64`) - binary interaction parameter  (no units)
-- `gamma_v`: Pair Parameter (`Float64`) - binary interaction parameter  (no units)
-- `beta_T`: Pair Parameter (`Float64`) - binary interaction parameter  (no units)
-- `gamma_T`: Pair Parameter (`Float64`) - binary interaction parameter  (no units)
+- `beta_v`: Pair Parameter (`Float64`) - Binary Interaction Parameter  (no units)
+- `gamma_v`: Pair Parameter (`Float64`) - Binary Interaction Parameter  (no units)
+- `beta_T`: Pair Parameter (`Float64`) - Binary Interaction Parameter  (no units)
+- `gamma_T`: Pair Parameter (`Float64`) - Binary Interaction Parameter  (no units)
 
 ## Description
 Asymmetric mixing rule for MultiParameter EoS models:
@@ -67,7 +67,7 @@ function transform_params(::Type{AsymmetricMixing},params)
     return params
 end
 
-function recombine_mixing!(model::MultiFluid,mixing::AsymmetricMixing,estimate)
+function recombine_mixing_reduced!(model::MultiFluid,mixing::AsymmetricMixing,estimate)
     Vc = model.params.Vc.values
     Tc = model.params.Tc.values
     n = length(model)
@@ -144,7 +144,7 @@ end
 """
     mixing_rule_asymmetric(op, op_asym, x, p, A, A_asym)
 
-returns an efficient implementation of:
+Returns an efficient implementation of:
 ` sum(A[i,j] * x[i] * x[j] * op(p[i],p[j]) * op_asym(x[i],x[j],A_asym[i,j])) for i = 1:n , j = 1:n)`
 where `op(p[i],p[j]) == op(p[j],p[i])` , op_asym doesn't follow this symmetry.
 

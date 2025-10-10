@@ -55,24 +55,28 @@ end
     assoc_options = AssocOptions())
 
 ## Input parameters
-- `Mw`: Single Parameter (`Float64`) - Molecular Weight `[g/mol]`
+- `Mw`: Single Parameter (`Float64`) - Molecular Weight `[g·mol⁻¹]`
 - `segment`: Single Parameter (`Float64`) - Number of segments (no units)
-- `sigma`: Single Parameter (`Float64`) - Segment Diameter [`A°`]
-- `epsilon`: Single Parameter (`Float64`) - Reduced dispersion energy  `[K]`
-- `k`: Pair Parameter (`Float64`) (optional) - Binary Interaction Paramater (no units)
+- `sigma`: Single Parameter (`Float64`) - Segment Diameter `[Å]`
+- `epsilon`: Single Parameter (`Float64`) - Reduced dispersion energy `[K]`
+- `k`: Pair Parameter (`Float64`) (optional) - Binary Interaction Parameter (no units)
 - `epsilon_assoc`: Association Parameter (`Float64`) - Reduced association energy `[K]`
-- `bondvol`: Association Parameter (`Float64`) - Association Volume `[m^3]`
+- `bondvol`: Association Parameter (`Float64`) - Association Volume `[m³]`
+
 ## Model Parameters
-- `Mw`: Single Parameter (`Float64`) - Molecular Weight `[g/mol]`
+- `Mw`: Single Parameter (`Float64`) - Molecular Weight `[g·mol⁻¹]`
 - `segment`: Single Parameter (`Float64`) - Number of segments (no units)
 - `sigma`: Pair Parameter (`Float64`) - Mixed segment Diameter `[m]`
 - `epsilon`: Pair Parameter (`Float64`) - Mixed reduced dispersion energy`[K]`
 - `epsilon_assoc`: Association Parameter (`Float64`) - Reduced association energy `[K]`
-- `bondvol`: Association Parameter (`Float64`) - Association Volume
+- `bondvol`: Association Parameter (`Float64`) - Association Volume `[m³]`
+
 ## Input models
 - `idealmodel`: Ideal Model
+
 ## Description
 Perturbed-Chain SAFT (PC-SAFT)
+
 ## References
 1. Gross, J., & Sadowski, G. (2001). Perturbed-chain SAFT: An equation of state based on a perturbation theory for chain molecules. Industrial & Engineering Chemistry Research, 40(4), 1244–1260. [doi:10.1021/ie0003887](https://doi.org/10.1021/ie0003887)
 2. Gross, J., & Sadowski, G. (2002). Application of the perturbed-chain SAFT equation of state to associating systems. Industrial & Engineering Chemistry Research, 41(22), 5510–5515. [doi:10.1021/ie010954d](https://doi.org/10.1021/ie010954d)
@@ -96,7 +100,7 @@ function data(model::PCSAFTModel,V,T,z)
 end
 
 #unpacks packing_fraction from data
-function packing_fraction(model::PCSAFTModel,_data::Tuple)
+function packing_fraction(model::PCSAFTModel,_data)
     _,_,_,_,η,_ = _data
     return η
 end
@@ -149,9 +153,7 @@ end =#
 
 function g_hs(model::PCSAFTModel, V, T, z, i, j, _data=@f(data))
     _d,ζ0,ζ1,ζ2,ζ3,_ = _data
-    di = _d[i]
-    dj = _d[j]
-    return 1/(1-ζ3) + di*dj/(di+dj)*3ζ2/(1-ζ3)^2 + (di*dj/(di+dj))^2*2ζ2^2/(1-ζ3)^3
+    return g_hs_ij(_d,ζ2,ζ3,i,j)
 end
 
 function a_hs(model::PCSAFTModel, V, T, z, _data=@f(data))

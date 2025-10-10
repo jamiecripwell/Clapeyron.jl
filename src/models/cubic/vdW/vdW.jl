@@ -33,14 +33,14 @@ export vdW
 ## Input parameters
 - `Tc`: Single Parameter (`Float64`) - Critical Temperature `[K]`
 - `Pc`: Single Parameter (`Float64`) - Critical Pressure `[Pa]`
-- `Mw`: Single Parameter (`Float64`) - Molecular Weight `[g/mol]`
+- `Mw`: Single Parameter (`Float64`) - Molecular Weight `[g·mol⁻¹]`
 - `k`: Pair Parameter (`Float64`) (optional)
 - `l`: Pair Parameter (`Float64`) (optional)
 
 ## Model Parameters
 - `Tc`: Single Parameter (`Float64`) - Critical Temperature `[K]`
 - `Pc`: Single Parameter (`Float64`) - Critical Pressure `[Pa]`
-- `Mw`: Single Parameter (`Float64`) - Molecular Weight `[g/mol]`
+- `Mw`: Single Parameter (`Float64`) - Molecular Weight `[g·mol⁻¹]`
 - `a`: Pair Parameter (`Float64`)
 - `b`: Pair Parameter (`Float64`)
 
@@ -53,7 +53,7 @@ export vdW
 
 ## Description
 
-van der Wals Equation of state.
+Van der Waals Equation of state.
 
 ```
 P = RT/(V-Nb) + a•α(T)/V²
@@ -93,7 +93,7 @@ model = vdW(["neon","hydrogen"];
 
 ## References
 
-1. van der Waals JD. Over de Continuiteit van den Gasen Vloeistoftoestand. PhD thesis, University of Leiden; 1873
+1. Van der Waals JD. Over de Continuiteit van den Gasen Vloeistoftoestand. PhD thesis, University of Leiden; 1873
 
 """
 vdW
@@ -118,7 +118,7 @@ function vdW(components;
     params = getparams(formatted_components, ["properties/critical.csv", "properties/molarmass.csv","SAFT/PCSAFT/PCSAFT_unlike.csv"];
                         userlocations = userlocations,
                         verbose = verbose,
-                        ignore_missing_singleparams = __ignored_crit_params(alpha))
+                        ignore_missing_singleparams = ["Vc","acentricfactor"])
 
     model = CubicModel(vdW,params,formatted_components;
                         idealmodel,alpha,mixing,activity,translation,
@@ -132,13 +132,7 @@ function vdW(components;
     return model
 end
 
-function ab_consts(::Type{<:vdWModel})
-    Ωa = 27/64
-    Ωb = 1/8
-    return Ωa,Ωb
-end
-
-cubic_Δ(model::vdWModel,z) = (0.0,0.0)
+@inline cubic_Δ(::Type{<:vdWModel}) = (0.0,0.0)
 
 function a_res(model::vdWModel, V, T, z,_data = data(model,V,T,z))
     n,ā,b̄,c̄ = _data
@@ -149,8 +143,6 @@ function a_res(model::vdWModel, V, T, z,_data = data(model,V,T,z))
     #
     #return -log(V-n*b̄) - ā*n/(R̄*T*V) + log(V)
 end
-
-crit_pure(model::vdWModel) = crit_pure_tp(model)
 
 const vdW_p = Solvers.ChebyshevRange(
     (0.02962962962962963,0.03796296296296296,0.0462962962962963,0.06296296296296297,0.0962962962962963,0.16296296296296295,0.2962962962962963),

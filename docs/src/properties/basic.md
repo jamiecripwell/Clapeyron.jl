@@ -16,7 +16,7 @@ Pages = ["basic.md"]
 
 ## Primitive functions
 
-Almost all models in Clapeyron based on Helmholtz free energy have at least one of the following functions defined:
+Almost all models in Clapeyron based on Helmholtz energy have at least one of the following functions defined:
 
 ```@docs
 Clapeyron.eos
@@ -37,7 +37,7 @@ Clapeyron.p∂p∂V
 Clapeyron.∂2f
 Clapeyron.∂2p
 Clapeyron.f_hess
-Clapeyron.∂²³f
+Clapeyron.p∂p∂2p
 ```
 
 ## Thermodynamic Method Dispatch types

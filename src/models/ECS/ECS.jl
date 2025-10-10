@@ -15,7 +15,7 @@ end
 ## Input Models
 
 - `shape_model`: shape model
-- `shape_ref`:  shape reference. is the same type of EoS that `shape_model`
+- `shape_ref`:  shape reference. Is the same type of EoS that `shape_model`.
 - `model_ref`: Reference model
 
 ## Description
@@ -23,7 +23,7 @@ end
 A Extended Corresponding states method.
 
 The idea is to use a "shape model" that provides a corresponding states parameters
-and a "reference model" that implements a helmholtz energy function, so that:
+and a "reference model" that implements a Helmholtz energy function, so that:
 
 ```
 eos(shape_model,v,T,x)/RT = eos(model_ref,v₀,T₀)/RT₀
@@ -113,7 +113,7 @@ fh = a(T)/a₀(T₀)
 function shape_factors end
 shape_factors(model::ECS,V,T,z=SA[1.0]) = shape_factors(model,model.shape_ref,V,T,z)
 
-function shape_factors(model::ECS,shape_ref::ABCubicModel,V,T,z=SA[1.0])
+function shape_factors(model::ECS,shape_ref::DeltaCubicModel,V,T,z=SA[1.0])
     a,b = cubic_ab(model.shape_model,V,T,z)
     n = sum(z)
     v = V/n

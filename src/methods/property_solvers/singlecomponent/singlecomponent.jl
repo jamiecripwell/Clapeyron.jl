@@ -1,33 +1,35 @@
 """
-    check_valid_sat_pure(model,P_sat,Vl,Vv,T,ε0 = 5e7)
+    check_valid_sat_pure(model,P_sat,Vl,Vv,T,z = SA[1.0])
 
 Checks that a saturation method converged correctly. it checks:
 - That both volumes are mechanically stable
 - That both volumes are different, with a difference of at least `ε0` epsilons
 """
-function check_valid_sat_pure(model,P_sat,V_l,V_v,T,ε0 = 5e7)
-   return check_valid_eq2(model,model,P_sat,V_l,V_v,T,ε0)
+function check_valid_sat_pure(model,P_sat,V_l,V_v,T,z = SA[1.0])
+   return check_valid_eq2(model,model,P_sat,V_l,V_v,T,z)
 end
 
-function check_valid_eq2(model1,model2,p,V1,V2,T,ε0 = 5e7)
+_p∂p∂V(model,V,T,z,p) = p∂p∂V(model,V,T,z)
+
+function _p∂p∂V(model::GibbsBasedModel,V,T,z,p)
+    _,dvdp = V∂V∂p(model,p,T,z)
+    return p,1/dvdp
+end
+
+_is_positive(x::Number) = isfinite(x) && x > zero(x)
+_is_positive(x::Tuple) = all(_is_positive,x)
+
+function check_valid_eq2(model1,model2,p,V1,V2,T,z = SA[1.0],ε0 = 5e7)
     ε = abs(V1-V2)/(eps(typeof(V1-V2)))
     ε <= ε0 && return false
-    p1,dpdv1 = p∂p∂V(model1,V1,T,SA[1.0])
-    p2,dpdv2 = p∂p∂V(model2,V2,T,SA[1.0])
-    return  (dpdv1 <= 0)        && #mechanical stability of phase 1
-            (dpdv2 <= 0)        && #mechanical stability of phase 2
-            T > zero(T)         && #positive temperature
-            p > zero(p)         && #positive pressure
-            p1 > zero(p1)       && #positive pressure at phase 1
-            p2 > zero(p2)          #positive pressure at phase 2
+    p1,dpdv1 = _p∂p∂V(model1,V1,T,z,p)
+    p2,dpdv2 = _p∂p∂V(model2,V2,T,z,p)
+    return  (dpdv1 <= 0)                    && #mechanical stability of phase 1
+            (dpdv2 <= 0)                    && #mechanical stability of phase 2
+            _is_positive((p1,p2,V2,V2,T,p)) #positive and finite pressures and volumes
 end
 
-function check_valid_2ph_input(v1,v2,p,T)
-    isfinite(v1) && isfinite(v2) | isfinite(T) | isfinite(p) | (T < zero(T)) | (p < zero(p))
-end
-
-function μp_equality1_p(model1,model2,v1,v2,T,ps,μs)
-    z = SA[1.0]
+function μp_equality1_p(model1,model2,v1,v2,T,ps,μs,z = SA[1.0])
     RT = Rgas(model1)*T
     f1(V) = a_res(model1,V,T,z)
     f2(V) = a_res(model2,V,T,z)
@@ -40,13 +42,12 @@ function μp_equality1_p(model1,model2,v1,v2,T,ps,μs)
     return SVector(Fμ,Fp)
 end
 
-function μp_equality1_p(model,v1,v2,T) 
-    ps,μs = equilibria_scale(model)
-    μp_equality1_p(model,model,v1,v2,T,ps,μs)
+function μp_equality1_p(model,v1,v2,T,z = SA[1.0]) 
+    ps,μs = equilibria_scale(model,z)
+    μp_equality1_p(model,model,v1,v2,T,ps,μs,z)
 end
 
-function μp_equality1_T(model1,model2,v1,v2,p,T,ps,μs)
-    z = SA[1.0]
+function μp_equality1_T(model1,model2,v1,v2,p,T,ps,μs,z = SA[1.0])
     RT = Rgas(model1)*T
     f1(V) = a_res(model1,V,T,z)
     f2(V) = a_res(model2,V,T,z)
@@ -60,6 +61,11 @@ function μp_equality1_T(model1,model2,v1,v2,p,T,ps,μs)
     return SVector(Fμ,Fp1,Fp2)
 end
 
+function μp_equality1_T(model,v1,v2,p,T,z = SA[1.0]) 
+    ps,μs = equilibria_scale(model,z)
+    μp_equality1_T(model,model,v1,v2,p,T,ps,μs,z)
+end
+
 function try_2ph_pure_pressure(model,T,v10,v20,ps,mus,method)
     return try_2ph_pure_pressure(model,model,T,v10,v20,ps,mus,method)
 end
@@ -69,7 +75,7 @@ function try_2ph_pure_pressure(model1,model2,T,v10,v20,ps,mus,method)
     TT = T*oneunit(eltype(model1))*oneunit(eltype(model2))
     V0 = svec2(log(v10),log(v20),TT)
 
-    if !check_valid_2ph_input(v10,v20,true,T)
+    if !_is_positive((v10,v20,T))
         _0 = zero(V0[1])
         nan = _0/_0
         fail = (nan,nan,nan)
@@ -91,7 +97,7 @@ function try_2ph_pure_temperature(model1,model2,p,T0,v10,v20,ps,mus,method)
     pp = p*oneunit(eltype(model1))*oneunit(eltype(model2))
     V0 = svec3(T0,log(v10),log(v20),pp)
 
-    if !check_valid_2ph_input(v10,v20,p,T0)
+    if !_is_positive((v10,v20,p,T0))
         _0 = zero(V0[1])
         nan = _0/_0
         fail = (nan,nan,nan)

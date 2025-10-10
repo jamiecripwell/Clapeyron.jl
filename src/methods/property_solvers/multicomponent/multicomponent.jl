@@ -8,7 +8,7 @@
 """
     mixture_critical_constraint(model,V,T,z)
 
-with `a(x)` the reduced `(A/RT)` helmholtz energy dependent on composition `xᵢ` for `i` ∈ `1:n`, returns `L` and `det(M)`, where `L` and `M` are defined as:
+with `a(x)` the reduced `(A/RT)` Helmholtz energy dependent on composition `xᵢ` for `i` ∈ `1:n`, returns `L` and `det(M)`, where `L` and `M` are defined as:
 ```
 L := det(ℍ(a)) (ℍ = hessian)
 M := ℍ(a) for rows ∈ 1:n-1
@@ -16,7 +16,7 @@ M := ℍ(a) for rows ∈ 1:n-1
 ```
 """
 function mixture_critical_constraint(model,V,T,z)
-    f(x) = eos(model,V,T,x)/(Rgas(model)*T)
+    f(x) = sum(x)*(a_res(model,V,T,x) + a_ideal(BasicIdeal(),V,T,x))
     H(x) = ForwardDiff.hessian(f,x) #∂A/∂zᵢ∂zⱼ == ∂A/∂zⱼ∂zᵢ
     L(x) = det(Symmetric(H(x)))
     dL(x) = ForwardDiff.gradient(L,x)
@@ -28,6 +28,7 @@ function mixture_critical_constraint(model,V,T,z)
     #M(x) = [HH[1:end-1,:];transpose(dL(x))]
     return LL , det(MM)
 end
+
 
 function μp_equality(model,v,T,w)
     np = length(v)
@@ -59,13 +60,9 @@ function η_from_v(model::EoSModel, V, T, z)
     return log((V - lb)/sum(z))
 end
 
-function η_from_v(model::EoSModel,model_r, V, T, z)
-    if model_r == nothing
-        return η_from_v(model,V,T,z)
-    else
-        return η_from_v(model_r,V,T,z)
-    end
-end
+η_from_v(model::EoSModel,::Nothing, V, T, z) = η_from_v(model,V,T,z)
+η_from_v(model::EoSModel,model_r::EoSModel, V, T, z) = η_from_v(model_r,V,T,z)
+
 
 struct TPspec{TT}
     T::TT
@@ -191,7 +188,9 @@ function wilson_k_values(model::EoSModel,p,T,crit = nothing)
     return wilson_k_values!(K,model,p,T,crit)
 end
 
-function wilson_k_values!(K,model::EoSModel,p,T,crit = nothing)
+wilson_k_values!(K,model::EoSModel,p,T) = wilson_k_values!(K,model,p,T,nothing)
+
+function wilson_k_values!(K,model::EoSModel,p,T,crit)
     n = length(model)
     pure = split_model.(model)
     if crit === nothing
@@ -208,7 +207,7 @@ function wilson_k_values!(K,model::EoSModel,p,T,crit = nothing)
 end
 
 function bubbledew_check(model,p,T,vw,vz,w,z)
-    (isapprox(vw,vz) && isapprox(w,z)) && return false
+    (isapprox(vw,vz) && z_norm(z,w) < 1e-5) && return false
     !all(isfinite,w) && return false
     !isfinite(vw) && return false
     !all(>=(0),w) && return false
@@ -361,6 +360,19 @@ function zero_non_equilibria!(w,in_equilibria)
     return w
 end
 
+
+function comps_in_equilibria(components,::Nothing)
+    return fill(true,length(components))
+end
+
+function comps_in_equilibria(components,not_in_w)
+    res = fill(true,length(components))
+    for i in 1:length(components)
+        res[i] = !in(components[i],not_in_w)
+    end
+    return res
+end
+
 include("fugacity.jl")
 include("rachford_rice.jl")
 include("bubble_point.jl")
@@ -380,6 +392,6 @@ include("solids/eutectic_point.jl")
 export bubble_pressure_fug, bubble_temperature_fug, dew_temperature_fug, dew_pressure_fug
 export bubble_pressure,    dew_pressure,    LLE_pressure,    azeotrope_pressure, VLLE_pressure
 export bubble_temperature, dew_temperature, LLE_temperature, azeotrope_temperature, VLLE_temperature
-export crit_mix, UCEP_mix, UCST_pressure, UCST_temperature, UCST_mix
+export crit_mix, UCEP_mix, UCST_pressure, UCST_temperature, UCST_mix, mechanical_critical_point
 export krichevskii_parameter
-export sle_solubility, eutectic_point, slle_solubility
+export sle_solubility, sle_solubility_T, eutectic_point, slle_solubility

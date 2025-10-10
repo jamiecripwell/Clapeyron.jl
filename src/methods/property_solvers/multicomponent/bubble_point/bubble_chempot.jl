@@ -7,8 +7,8 @@ It directly solves the equality of chemical potentials system of equations.
 
 Inputs:
 - `y0 = nothing`: optional, initial guess for the vapor phase composition
-- `p0 = nothing`: optional, initial guess for the bubble pressure [`Pa`]
-- `vol0 = nothing`: optional, initial guesses for the liquid and vapor phase volumes
+- `p0 = nothing`: optional, initial guess for the bubble pressure `[Pa]`
+- `vol0 = nothing`: optional, initial guesses for the liquid and vapor phase volumes `[m³]`
 - `atol = 1e-8`: optional, absolute tolerance of the non linear system of equations
 - `rtol = 1e-12`: optional, relative tolerance of the non linear system of equations
 - `max_iters = 1000`: optional, maximum number of iterations
@@ -69,22 +69,17 @@ end
 
 function bubble_pressure_impl(model::EoSModel, T, x,method::ChemPotBubblePressure)
 
-    if !isnothing(method.nonvolatiles)
-        volatiles = [!in(x,method.nonvolatiles) for x in model.components]
-    else
-        volatiles = fill(true,length(model))
-    end
-    _vol0,_p0,_y0 = method.vol0,method.p0,method.y0
-    p0,vl,vv,y0 = bubble_pressure_init(model,T,x,_vol0,_p0,_y0,volatiles)
-
-    if !isnothing(method.nonvolatiles)
-        model_y,volatiles = index_reduction(model,volatiles)
-        y0 = y0[volatiles]
-    else
-        model_y = nothing
-    end
+    volatiles = comps_in_equilibria(component_list(model),method.nonvolatiles)
+    p0,vl,vv,y0 = bubble_pressure_init(model,T,x,method.vol0,method.p0,method.y0,volatiles)
+    is_non_volatile = !isnothing(method.nonvolatiles)
+    model_y,_ = index_reduction(model,volatiles)
+    y0 = y0[volatiles]
     ηl = η_from_v(model, vl, T, x)
-    ηv = η_from_v(model, model_y, vv, T, y0)
+    if is_non_volatile
+        ηv = η_from_v(model_y, vv, T, y0)
+    else
+        ηv = η_from_v(model, vv, T, y0)
+    end
     _,idx_max = findmax(y0)
     v0 = vcat(ηl,ηv,deleteat(y0,idx_max)) #select component with highest fraction as pivot
     f!(F,z) = Obj_bubble_pressure(model,model_y, F, T, z[1],z[2],x,z[3:end],volatiles,idx_max)
@@ -94,19 +89,23 @@ function bubble_pressure_impl(model::EoSModel, T, x,method::ChemPotBubblePressur
     v_l = v_from_η(model,sol[1],T,x)
     y_r = FractionVector(sol[3:end],idx_max)
     v_v = v_from_η(model,model_y,sol[2],T,y_r)
-    y = index_expansion(y_r,volatiles)
+    y_sol = index_expansion(y_r,volatiles)
     P_sat = pressure(model,v_l,T,x)
-    return (P_sat, v_l, v_v, y)
+    return (P_sat, v_l, v_v, y_sol)
 end
 
 
 function Obj_bubble_pressure(model::EoSModel, model_y, F, T, ηl, ηv, x, y, _view,yy_i)
     v_l = v_from_η(model,ηl,T,x)
     yy = FractionVector(y,yy_i)
-    v_v = v_from_η(model,model_y,ηv,T,yy)
+    v_v = v_from_η(model_y,ηv,T,yy)
     v = (v_l,v_v)
     w = (x,yy)
-    return μp_equality2(model, model_y, F, Tspec(T), v, w, _view)
+    if all(_view)
+        return μp_equality2(model, nothing, F, Tspec(T), v, w, _view)
+    else
+        return μp_equality2(model, model_y, F, Tspec(T), v, w, _view)
+    end
 end
 
 #used by LLE_pressure
@@ -134,9 +133,9 @@ Function to compute [`bubble_temperature`](@ref) via chemical potentials.
 It directly solves the equality of chemical potentials system of equations.
 
 Inputs:
-- `y = nothing`: optional, initial guess for the vapor phase composition.
-- `T0 = nothing`: optional, initial guess for the bubble temperature [`K`].
-- `vol0 = nothing`: optional, initial guesses for the liquid and vapor phase volumes
+- `y0 = nothing`: optional, initial guess for the vapor phase composition.
+- `T0 = nothing`: optional, initial guess for the bubble temperature `[K]`.
+- `vol0 = nothing`: optional, initial guesses for the liquid and vapor phase volumes `[m³]`
 - `atol = 1e-8`: optional, absolute tolerance of the non linear system of equations
 - `rtol = 1e-12`: optional, relative tolerance of the non linear system of equations
 - `max_iters = 1000`: optional, maximum number of iterations
@@ -184,23 +183,20 @@ function ChemPotBubbleTemperature(;vol0 = nothing,
 end
 
 function bubble_temperature_impl(model::EoSModel,p,x,method::ChemPotBubbleTemperature)
-    if !isnothing(method.nonvolatiles)
-        volatiles = [!in(x,method.nonvolatiles) for x in model.components]
-    else
-        volatiles = fill(true,length(model))
-    end
+    
 
-    _vol0,_T0,_y0 = method.vol0,method.T0,method.y0
-    T0,vl,vv,y0 = bubble_temperature_init(model,p,x,_vol0,_T0,_y0,volatiles)
+    is_non_volatile = !isnothing(method.nonvolatiles)
+    volatiles = comps_in_equilibria(component_list(model),method.nonvolatiles)
+    model_y,_ = index_reduction(model,volatiles)
+    T0,vl,vv,y0 = bubble_temperature_init(model,p,x,method.vol0,method.T0,method.y0,volatiles)
+    y0 = y0[volatiles]
 
-    if !isnothing(method.nonvolatiles)
-        model_y,volatiles = index_reduction(model,volatiles)
-        y0 = y0[volatiles]
-    else
-        model_y = nothing
-    end
     ηl = η_from_v(model, vl, T0, x)
-    ηv = η_from_v(model, model_y, vv, T0, y0)
+    if is_non_volatile
+        ηv = η_from_v(model_y, vv, T0, y0)
+    else
+        ηv = η_from_v(model, vv, T0, y0)
+    end
     _,idx_max = findmax(y0)
     v0 = vcat(T0,ηl,ηv,deleteat(y0,idx_max)) #select component with highest fraction as pivot
     f!(F,z) = Obj_bubble_temperature(model,model_y, F, p, z[1], z[2], z[3], x, z[4:end],volatiles,idx_max)
@@ -215,14 +211,17 @@ function bubble_temperature_impl(model::EoSModel,p,x,method::ChemPotBubbleTemper
     return T, v_l, v_v, y
 end
 
-function Obj_bubble_temperature(model::EoSModel, model_y, F, p, T, ηl, ηv, x, y, _view,yy_i)
+function Obj_bubble_temperature(model::EoSModel, model_y, F, p, T, ηl, ηv, x, y, _view, yy_i)
     yy = FractionVector(y,yy_i)
     vl = v_from_η(model, ηl, T, x)
-    vv = v_from_η(model, model_y, ηv, T, yy)
+    vv = v_from_η(model_y, ηv, T, yy)
     v = (vl,vv)
     w = (x,yy)
-    F = μp_equality2(model::EoSModel, model_y, F, Pspec(p,T), v, w, _view)
-    return F
+    if all(_view)
+        return μp_equality2(model, nothing, F, Pspec(p,T), v, w, _view)
+    else
+        return μp_equality2(model, model_y, F, Pspec(p,T), v, w, _view)
+    end
 end
 
 #used by LLE_temperature

@@ -19,6 +19,8 @@ Pages = ["bulk.md"]
 ```@docs
 Clapeyron.pressure
 Clapeyron.second_virial_coefficient
+Clapeyron.cross_second_virial
+Clapeyron.equivol_cross_second_virial
 Clapeyron.pip
 ```
 
@@ -76,30 +78,36 @@ Clapeyron.isentropic_compressibility
 Clapeyron.speed_of_sound
 Clapeyron.isobaric_expansivity
 Clapeyron.joule_thomson_coefficient
+Clapeyron.inversion_temperature
+Clapeyron.fundamental_derivative_of_gas_dynamics
 ```
 
-### Methods that require first order composition derivatives
+### Chemical potential functions
 
 ```@docs
 Clapeyron.chemical_potential
 Clapeyron.chemical_potential_res
 Clapeyron.fugacity_coefficient
-```
-
-### Activity Coefficient
-
-```@docs
-Clapeyron.reference_chemical_potential
-Clapeyron.reference_chemical_potential_type
 Clapeyron.activity_coefficient
 Clapeyron.activity
 Clapeyron.aqueous_activity
+Clapeyron.reference_chemical_potential
+Clapeyron.reference_chemical_potential_type
 ```
 
-### Mixing
+### Mixing and partial properties
 
 ```@docs
 Clapeyron.mixing
+Clapeyron.partial_property
+Clapeyron.shape_factors
+```
+
+### Phase identification
+
+```@docs
+Clapeyron.identify_phase
+Clapeyron.VT_identify_phase
 ```
 
 ## Initial guess functions
@@ -120,4 +128,34 @@ Clapeyron.x0_psat
 Clapeyron.x0_saturation_temperature
 Clapeyron.antoine_coef
 Clapeyron.x0_crit_pure
+```
+
+## Inverse property solvers
+
+```@docs
+Clapeyron.Tproperty
+Clapeyron.Pproperty
+```
+
+## Mass-based bulk properties
+
+```@docs
+Clapeyron.mass_enthalpy
+Clapeyron.mass_entropy
+Clapeyron.mass_internal_energy
+Clapeyron.mass_isochoric_heat_capacity
+Clapeyron.mass_isobaric_heat_capacity
+Clapeyron.mass_gibbs_free_energy
+Clapeyron.mass_helmholtz_free_energy
+```
+
+## Energy function aliases (non-"free" naming)
+
+```@docs
+Clapeyron.gibbs_energy
+Clapeyron.helmholtz_energy
+Clapeyron.gibbs_energy_res
+Clapeyron.helmholtz_energy_res
+Clapeyron.mass_gibbs_energy
+Clapeyron.mass_helmholtz_energy
 ```

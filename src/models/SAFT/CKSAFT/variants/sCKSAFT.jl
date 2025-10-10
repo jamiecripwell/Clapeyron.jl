@@ -36,21 +36,21 @@ export sCKSAFT
     assoc_options = AssocOptions())
 
 ## Input parameters
-- `Mw`: Single Parameter (`Float64`) - Molecular Weight `[g/mol]`
+- `Mw`: Single Parameter (`Float64`) - Molecular Weight `[g·mol⁻¹]`
 - `segment`: Single Parameter (`Float64`) - Number of segments (no units)
-- `vol`: Single Parameter (`Float64`) - Segment Volume [`dm^3`]
-- `epsilon`: Single Parameter (`Float64`) - Reduced dispersion energy  `[K]`
-- `k`: Pair Parameter (`Float64`) (optional) - Binary Interaction Paramater (no units)
+- `vol`: Single Parameter (`Float64`) - Segment Volume `[dm³]`
+- `epsilon`: Single Parameter (`Float64`) - Reduced dispersion energy `[K]`
+- `k`: Pair Parameter (`Float64`) (optional) - Binary Interaction Parameter (no units)
 - `epsilon_assoc`: Association Parameter (`Float64`) - Reduced association energy `[K]`
-- `bondvol`: Association Parameter (`Float64`) - Association Volume `[m^3]`
+- `bondvol`: Association Parameter (`Float64`) - Association Volume `[m³]`
 
 ## Model Parameters
-- `Mw`: Single Parameter (`Float64`) - Molecular Weight `[g/mol]`
+- `Mw`: Single Parameter (`Float64`) - Molecular Weight `[g·mol⁻¹]`
 - `segment`: Single Parameter (`Float64`) - Number of segments (no units)
 - `sigma`: Pair Parameter (`Float64`) - Mixed segment Diameter `[m]`
 - `epsilon`: Pair Parameter (`Float64`) - Mixed reduced dispersion energy`[K]`
 - `epsilon_assoc`: Association Parameter (`Float64`) - Reduced association energy `[K]`
-- `bondvol`: Association Parameter (`Float64`) - Association Volume
+- `bondvol`: Association Parameter (`Float64`) - Association Volume `[m³]`
 
 ## Input models
 - `idealmodel`: Ideal Model
@@ -66,8 +66,9 @@ Simplified Chen and Kreglewski SAFT (sCK-SAFT)
 """
 sCKSAFT
 
-function x0_crit_pure(model::sCKSAFTModel)
-    lb_v = lb_volume(model)
+function x0_crit_pure(model::sCKSAFTModel,z)
+    T = T_scale(model,z)
+    lb_v = lb_volume(model,T,z)/sum(z)
     res = (5.0, log10(lb_v/0.3))
     return res
 end
@@ -119,7 +120,7 @@ function Δ(model::sCKSAFTModel, V, T, z, i, j, a, b, _data = @f(data))
     _d, m̄, ζi, Σz = _data
     ϵ_assoc = model.params.epsilon_assoc.values[i,j][a,b]
     κ = model.params.bondvol.values[i,j][a,b]
-    g = @f(g_hsij,i,j,_data)
+    g = @f(g_hs,i,j,_data)
     di,dj = _d[i],_d[j]
     dij = 0.5*(di+dj)
     res = g*dij^3*(exp(ϵ_assoc/T)-1)*κ

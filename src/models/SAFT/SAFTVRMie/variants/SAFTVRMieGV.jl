@@ -3,7 +3,7 @@ SAFT-VR Mie multipolar approach using GV polar terms.
 
 Polar terms copied verbatim from PCPSAFT and QPCPSAFT since they are the same ones used here.
 """
-struct SAFTVRMieGVParam <: EoSParam
+struct SAFTVRMieGVParam{T} <: ParametricEoSParam{T}
     Mw::SingleParam{Float64}
     segment::SingleParam{Float64}
     sigma::PairParam{Float64}
@@ -20,8 +20,13 @@ struct SAFTVRMieGVParam <: EoSParam
 	nQ::SingleParam{Float64}   
 end
 
+
+function SAFTVRMieGVParam(Mw,segment,sigma,lambda_a,lambda_r,epsilon,epsilon_assoc,bondvol,dipole,dipole2,np,quadrupole,quadrupole2,nQ)
+    return build_parametric_param(SAFTVRMieGVParam,Mw,segment,sigma,lambda_a,lambda_r,epsilon,epsilon_assoc,bondvol,dipole,dipole2,np,quadrupole,quadrupole2,nQ) 
+end
+
 abstract type SAFTVRMieGVModel <: SAFTVRMieModel end
-@newmodel SAFTVRMieGV SAFTVRMieGVModel SAFTVRMieGVParam
+@newmodel SAFTVRMieGV SAFTVRMieGVModel SAFTVRMieGVParam{T}
 default_references(::Type{SAFTVRMieGV}) = ["10.1016/j.fluid.2017.09.027","10.1021/acs.jced.0c00705"]
 default_locations(::Type{SAFTVRMieGV}) = ["SAFT/SAFTVRMie/SAFTVRMieGV/","properties/molarmass.csv"] 
 
@@ -66,22 +71,22 @@ end
     assoc_options = AssocOptions()) # SS: is it possible to add another parameter here to select/deselect DQ term?
 
 ## Input parameters
-- `Mw`: Single Parameter (`Float64`) - Molecular Weight `[g/mol]`
+- `Mw`: Single Parameter (`Float64`) - Molecular Weight `[g·mol⁻¹]`
 - `segment`: Single Parameter (`Float64`) - Number of segments (no units)
-- `sigma`: Single Parameter (`Float64`) - Segment Diameter [`A°`]
-- `epsilon`: Single Parameter (`Float64`) - Reduced dispersion energy  `[K]`
+- `sigma`: Single Parameter (`Float64`) - Segment Diameter `[Å]`
+- `epsilon`: Single Parameter (`Float64`) - Reduced dispersion energy `[K]`
 - `lambda_a`: Pair Parameter (`Float64`) - Attractive range parameter (no units)
 - `lambda_r`: Pair Parameter (`Float64`) - Repulsive range parameter (no units)
-- `k`: Pair Parameter (`Float64`) (optional) - Binary Interaction Paramater (no units)
+- `k`: Pair Parameter (`Float64`) (optional) - Binary Interaction Parameter (no units)
 - `dipole`: Single Parameter (`Float64`) - Dipole moment `[D]`
 - `np` : Single Parameter (`Float64`) - number of dipolar segments (no units)
-- `quadrupole`: Single Parameter (`Float64`) - Quadrupole moment `[DA°]`
+- `quadrupole`: Single Parameter (`Float64`) - Quadrupole moment `[D·Å]`
 - `nQ` : Single Parameter (`Float64`) - number of quadrupolar segments (no units)
 - `epsilon_assoc`: Association Parameter (`Float64`) - Reduced association energy `[K]`
-- `bondvol`: Association Parameter (`Float64`) - Association Volume `[m^3]`
+- `bondvol`: Association Parameter (`Float64`) - Association Volume `[m³]`
 
 ## Model Parameters
-- `Mw`: Single Parameter (`Float64`) - Molecular Weight `[g/mol]`
+- `Mw`: Single Parameter (`Float64`) - Molecular Weight `[g·mol⁻¹]`
 - `segment`: Single Parameter (`Float64`) - Number of segments (no units)
 - `sigma`: Pair Parameter (`Float64`) - Mixed segment Diameter `[m]`
 - `epsilon`: Pair Parameter (`Float64`) - Mixed reduced dispersion energy`[K]`
@@ -89,10 +94,10 @@ end
 - `lambda_r`: Pair Parameter (`Float64`) - Repulsive range parameter (no units)
 - `dipole`: Single Parameter (`Float64`) - Dipole moment `[D]`
 - `np` : Single Parameter (`Float64`) - number of dipolar segments (no units)
-- `quadrupole`: Single Parameter (`Float64`) - Quadrupole moment `[DA°]`
+- `quadrupole`: Single Parameter (`Float64`) - Quadrupole moment `[D·Å]`
 - `nQ` : Single Parameter (`Float64`) - number of quadrupolar segments (no units)
 - `epsilon_assoc`: Association Parameter (`Float64`) - Reduced association energy `[K]`
-- `bondvol`: Association Parameter (`Float64`) - Association Volume
+- `bondvol`: Association Parameter (`Float64`) - Association Volume `[m³]`
 
 ## Input models
 - `idealmodel`: Ideal Model
@@ -337,25 +342,6 @@ function a_2_dq(model ::SAFTVRMieGVModel, V, T, z, _data=@f(data))
     end
     _a_2 *= -π*9/4*ρ/(T*T)/(∑z*∑z)
     return _a_2
-    dp_comps, qp_comps = @f(polar_comp)
-    Q̄² = model.params.quadrupole2.values
-    μ̄² = model.params.dipole2.values
-    _,_,_,_,η,_ = _data
-    ∑z = sum(z)
-    ρ = N_A*∑z/V
-    _a_2 = zero(T+V+first(z))
-    m = model.params.segment.values
-    ϵ = model.params.epsilon.values
-    #ϵ_TS = [sqrt(ϵ[i,i]*ϵ[j,j]) for i ∈ @comps, j ∈ @comps]
-    σ = model.params.sigma.values
-    @inbounds for i ∈ dp_comps
-        for j ∈ qp_comps
-            _J2_ij = @f(J2,:DQ,i,j,η,m)
-            _a_2 += z[i]*z[j]*μ̄²[i]*Q̄²[j]/σ[i,j]^5*_J2_ij
-        end
-    end
-    _a_2 *= -π*9/4*ρ/(T*T)/(∑z*∑z)
-    return _a_2
 end
 
 function a_3_dq(model ::SAFTVRMieGVModel, V, T, z, _data=@f(data))
@@ -379,7 +365,7 @@ function a_3_dq(model ::SAFTVRMieGVModel, V, T, z, _data=@f(data))
             iszero(μ̄²j) & iszero(Q̄²j) && continue
             σj = σ[j,j]
             σij = σ[i,j]
-            for k ∈ 1:nc#qp_comps
+            for k ∈ 1:nc #qp_comps
                 μ̄²k,zk,Q̄²k = μ̄²[k],z[k],Q̄²[k]
                 iszero(Q̄²k) && continue
                 _J3_ijk = @f(J3,:DQ,i,j,k,η,m)
@@ -392,7 +378,7 @@ function a_3_dq(model ::SAFTVRMieGVModel, V, T, z, _data=@f(data))
     _a_3 *= -ρ^2/(T*T*T)/(∑z*∑z*∑z)
     return _a_3
 end
-
+#=
 function polar_comp(model, V, T, z)
     μ̄² = model.params.dipole2.values
     Q̄² = model.params.quadrupole2.values
@@ -403,7 +389,7 @@ function polar_comp(model, V, T, z)
         if !iszero(Q̄²[i]) push!(quadrupole_comps,i) end
     end
     return dipole_comps, quadrupole_comps
-end
+end=#
 
 function J2(model::SAFTVRMieGVModel, V, T, z, type::Symbol, i, j, η = @f(ζ0123,4), m = model.params.segment.values,ϵT⁻¹ = model.params.epsilon.values[i,j]/T)
     m̄ = sqrt(m[i]*m[j])
