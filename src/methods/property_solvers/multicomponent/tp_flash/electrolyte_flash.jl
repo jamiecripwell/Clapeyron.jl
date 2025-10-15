@@ -36,15 +36,12 @@ function tp_flash_michelsen(model::ElectrolyteModel, p, T, z, method = Michelsen
 
     nc = length(model)
     # constructing non-in-x list
-    non_inx = fill(false,nc)
+    model_components = component_list(model)
+    non_inx = comps_in_equilibria(model_components,non_inx_list)
+    non_inx .= (!).(non_inx)
     # constructing non-in-y list
-    non_iny = fill(false,nc)
-
-    for i in 1:nc
-        component = model_components[i]
-        non_inx[i] = !isnothing(non_inx_list) && (component in non_inx_list) && true
-        non_iny[i] = !isnothing(non_iny_list) && (component in non_iny_list) && true
-    end
+    non_iny = comps_in_equilibria(model_components,non_iny_list)
+    non_iny .= (!).(non_iny)
 
     non_inw = (non_inx,non_iny)
     phases = (phasex,phasey)
@@ -59,8 +56,9 @@ function tp_flash_michelsen(model::ElectrolyteModel, p, T, z, method = Michelsen
     y .= z
     K,lnK = similar(x),similar(x)
     dlnϕ_cache = ∂lnϕ_cache(model, p, T, x, Val{false}())
+    _1 = one(eltype(K))
     if !isnothing(K0)
-        K .= 1. * K0
+        K .= K0
         lnK .= log.(K)
         verbose && @info "K0 already provided"
     elseif !isnothing(x0) && !isnothing(y0)
@@ -93,7 +91,8 @@ function tp_flash_michelsen(model::ElectrolyteModel, p, T, z, method = Michelsen
     # Initial guess for phase split
     ψ = -sum(Z.*lnK)/sum(abs.(Z))
     K̄ = K.*exp.(Z.*ψ)
-    β,singlephase,_,_ = rachfordrice_β0(K̄,z,nothing,non_inx,non_iny)
+    β,status,_ = rachfordrice_β0(K̄,z,nothing,non_inx,non_iny)
+    status0 = status
     #=TODO:
     there is a method used in TREND that tries to obtain adequate values of K
     in the case of incorrect initialization.
@@ -101,7 +100,8 @@ function tp_flash_michelsen(model::ElectrolyteModel, p, T, z, method = Michelsen
     # Stage 1: Successive Substitution
     verbose && @info "initial vapour fraction = $β"
     verbose && @info "ψ(K0) = $ψ"
-    verbose && singlephase && @info "initial point is single-phase (does not satisfy Rachford-Rice constraints). Exiting early"
+    verbose && status != RREq && @info "initial point is single-phase (does not satisfy Rachford-Rice constraints). Exiting early"
+    
     error_lnK = _1
     it = 0
     itacc = 0
@@ -118,7 +118,7 @@ function tp_flash_michelsen(model::ElectrolyteModel, p, T, z, method = Michelsen
     gibbs_dem = one(_1)
     vcache = Ref((_1, _1))
 
-    while error_lnK > K_tol && it < itss && !singlephase
+    while error_lnK > K_tol && it < itss && status == RREq
         it += 1
         itacc += 1
         lnK̄_old .= lnK + Z.*ψ
@@ -160,14 +160,23 @@ function tp_flash_michelsen(model::ElectrolyteModel, p, T, z, method = Michelsen
 
         β,ψ = rachfordrice(K, z, Z; β0=β, ψ0=ψ, non_inx=non_inx, non_iny=non_iny)
         lnK̄ = lnK + Z.*ψ
+        K̄ = exp.(lnK̄)
         # println(ψ)
-        singlephase = !(0 < β < 1) #rachford rice returns 0 or 1 if it is single phase.
+        status = rachfordrice_status(K,z,non_inx,non_iny;K_tol = K_tol)
+        Kmin,Kmax = K_extrema(K,non_inx,non_iny)
+        if status == RRLiquid && Kmin < 1
+            status = RREq
+            β = eps(eltype(β))
+        elseif status == RRVapour && Kmax > 1
+            status = RREq
+            β = 1 - eps(eltype(β))
+        end
         # Computing error
         # error_lnK = sum((lnK .- lnK_old).^2)
         error_lnK = dnorm(@view(lnK̄[in_equilibria]),@view(lnK̄_old[in_equilibria]),1)
         # println(error_lnK)
     end
-    if error_lnK > K_tol && it == itss && !singlephase && use_opt_solver
+    if error_lnK > K_tol && it == itss && status == RREq && use_opt_solver
         verbose && @info "$it error(lnK) > $K_tol, solving via non-linear system"
         nx = zeros(nc)
         ny = zeros(nc)
@@ -203,32 +212,59 @@ function tp_flash_michelsen(model::ElectrolyteModel, p, T, z, method = Michelsen
         x .= nx ./ nxsum
         y .= ny ./ nysum
         β = sum(ny)
+        K .= y ./ x
     end
-    K .= y ./ x
+    
     verbose && @info "final K values: $K"
-    β = ((z.-x)./(y.-x))[1]
+    #zv = @view(z[in_equilibria])
+    #xv = @view(x[in_equilibria])
+    #yv = @view(z[in_equilibria])
+    #β = (zv[1] - xv[1])/(yv[1] - xv[1])
+
     verbose && @info "final vapour fraction: $β"
     #convergence checks (TODO, seems to fail with activity models)
-    _,singlephase,_,_ = rachfordrice_β0(K,z,β,non_inx,non_iny)
-    verbose && singlephase && @info "result is single-phase (does not satisfy Rachford-Rice constraints)."
+    status = rachfordrice_status(K,z,non_inx,non_iny;K_tol = K_tol)
+    verbose && status != RREq && @info "result is single-phase (does not satisfy Rachford-Rice constraints)."
 
     vx,vy = vcache[]
     #@show vx,vy
     #maybe azeotrope, do nothing in this case
-    if abs(vx - vy) > sqrt(max(abs(vx),abs(vy))) && singlephase
+    if abs(vx - vy) > sqrt(max(abs(vx),abs(vy))) && status != RREq
         verbose && @info "trivial result but different volumes (maybe azeotrope?)"
-        singlephase = false
+        status = RREq
+    elseif status == RRTrivial && it > 0
+        verbose && @info "procedure converged to trivial K-values, checking initial conditions to see if resulting phase is liquid or vapour."
+        status0 == RRLiquid && (status = RRLiquid)
+        status0 == RRVapour && (status = RRVapour)
+    elseif status == RREq && β <= eps(eltype(β))
+        status = RRLiquid
+    elseif status == RREq && β >=  one(β)  - eps(eltype(β))
+        status = RRVapour
     elseif !material_balance_rr_converged((x,y),z,β) #material balance failed
         verbose && @info "material balance failed."
-        singlephase = true
-    elseif any(isnan,view(K,in_equilibria)) || isnan(ψ)
-        singlephase = true
+        status = RRFailure
     end
 
-    if singlephase
-        β = zero(β)/zero(β)
+    verbose && status == RRLiquid && @info "procedure converged to a single liquid phase."
+    verbose && status == RRVapour && @info "procedure converged to a single vapour phase."
+
+    if status != RREq
+        _0 = zero(eltype(x))
+        _1 = one(eltype(x))
         x .= z
         y .= z
+        if status == RRLiquid
+            β = _0
+            vz = volume(model,p,T,z,phase = :l)
+        elseif status == RRVapour
+            β = _1
+            vz = volume(model,p,T,z,phase = :v)
+        else
+            β = _0/_0
+            vz = _0/_0
+        end
+        vx = vz
+        vy = vz
     end
 
     if !reduced
@@ -240,8 +276,8 @@ end
 
 function rachfordrice(K, z, Z; β0=nothing, ψ0=nothing, non_inx=FillArrays.Fill(false,length(z)), non_iny=FillArrays.Fill(false,length(z)))
     # Function to solve Rachdord-Rice mass balance
-    β,singlephase,limits,_ = rachfordrice_β0(K.*exp.(Z.*ψ0),z,β0,non_inx,non_iny)
-    if !singlephase
+    β,status,limits = rachfordrice_β0(K.*exp.(Z.*ψ0),z,β0,non_inx,non_iny)
+    if status == RREq
         function rachford_rice_donnan(x,K,z,Z)
             β = x[1]
             ψ = x[2]

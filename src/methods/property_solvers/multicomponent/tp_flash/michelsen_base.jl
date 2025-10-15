@@ -1,15 +1,38 @@
-function rachfordrice(K, z; β0=nothing, non_inx=FillArrays.Fill(false,length(z)), non_iny=FillArrays.Fill(false,length(z)))
+function rachfordrice(K, z; β0=nothing,K_tol = 4*eps(eltype(K)), non_inx=FillArrays.Fill(false,length(z)), non_iny=FillArrays.Fill(false,length(z)))
     # Function to solve Rachdord-Rice mass balance
-    β,singlephase,limits,_ = rachfordrice_β0(K,z,β0,non_inx,non_iny)
-    if length(z) <= 3 && all(Base.Fix2(>,0),z) && all(!,non_inx) && all(!,non_iny) && !singlephase
-        return rr_vle_vapor_fraction_exact(K,z)
+    β,status,limits = rachfordrice_β0(K,z,β0,non_inx,non_iny;K_tol = K_tol)
+    if length(z) <= 3 && all(Base.Fix2(>,0),z) && all(!,non_inx) && all(!,non_iny) && status == RREq
+        βx = rr_vle_vapor_fraction_exact(K,z)
+        return clamp(βx,zero(β),one(β))
     end
-    #halley refinement
-    if !singlephase
-        return rr_flash_refine(K,z,β,non_inx,non_iny,limits)
+
+    if status == RREq
+        βx = rr_flash_refine(K, z, β, non_inx, non_iny, limits) # bracketed Halley when possible
+        return clamp(βx,zero(β),one(β))
+    elseif status == RRLiquid
+        return zero(β)   # or eps(eltype(β))
+    elseif status == RRVapour
+        return one(β)   # or 1 - eps(eltype(β))
     else
         return zero(β)/zero(β)
     end
+end
+
+function K_extrema(K::AbstractVector{T},non_inx,non_iny) where T
+    Kmax = T(-Inf)
+    Kmin = T(Inf)
+    for i in 1:length(K)
+        if non_inx[i]
+            Ki = T(Inf)
+        elseif non_iny[i]
+            Ki = T(0)
+        else
+            Ki = K[i]
+        end
+        Kmax = max(Ki,Kmax)
+        Kmin = min(Ki,Kmin)
+    end
+    return Kmin,Kmax
 end
 
 function dgibbs_obj!(model::EoSModel, p, T, z, phasex, phasey,
@@ -232,19 +255,18 @@ function pt_flash_x0(model,p,T,n,method = GeneralizedXYFlash(),non_inx = FillArr
         volx = zero(_1)
         voly = zero(_1)
     end
-    β,singlephase,_,g01 = rachfordrice_β0(K,z,nothing,non_inx,non_iny)
-    g0,g1 = g01
-    #if singlephase == true, maybe initial K values overshoot the actual phase split.
-    if singlephase
-        Kmin,Kmax = extrema(K)
+    β,status,_ = rachfordrice_β0(K,z,nothing,non_inx,non_iny)
+    #if status != RREq, maybe initial K values overshoot the actual phase split.
+    if status != RREq
+        Kmin,Kmax = K_extrema(K,non_inx,non_iny)
         if !(Kmin >= 1 || Kmax <= 1)
             #valid K, still single phase.
-            if g0 <= 0 && g1 < 0 #bubble point.
+            if status == RRLiquid #bubble point.
                 β = eps(typeof(β))
-                singlephase = false
-            elseif g0 > 0 && g1 >= 0 #dew point
+                status = RREq
+            elseif status == RRVapour #dew point
                 β = one(β) - eps(typeof(β))
-                singlephase = false
+                status = RREq
             end
         end
     else
