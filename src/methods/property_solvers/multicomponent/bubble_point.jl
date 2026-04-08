@@ -197,8 +197,13 @@ function __dlnPdTinvsat(pure,sat,crit,xx,is_sat_temperature,status)
         return -dpdT*T*T/p,log(p),1/T
     elseif status === :supercritical
         Tc,Pc,Vc = crit
-        _p(_T) = pressure(pure,Vc,_T)
-        dpdT = Solvers.derivative(_p,Tc)
+        if has_a_res(pure)
+            _p(_T) = pressure(pure,Vc,_T)
+            dpdT = Solvers.derivative(_p,Tc)
+        else
+            f(_T) = first(saturation_pressure(model,_T))
+            dpdT = dpdT_saturation(pure,NaN,NaN,T)
+        end
         return -dpdT*Tc*Tc/Pc,log(Pc),1/Tc
     elseif status == :fail
         return sat
@@ -256,16 +261,39 @@ function improve_bubbledew_suggestion(model,p0,T0,x,y,method,in_media,high_condi
     end
 
     vlx = volume(model,p,T,x,phase = :l)
+    if high_conditions && isnan(vlx)
+        for i in 1:10
+            if FugEnum.is_temperature(method)
+                T *= 0.99
+            else
+                p *= 1.1
+            end
+            vlx = volume(model,p,T,x,phase = :l)
+            !isnan(vlx) && break
+        end
+    end
     μl = VT_chemical_potential_res(model,vlx,T,x)
     RT = Rgas(model) * T
     Zl = p*vlx/RT/sum(x)
-    ϕl = K = similar(μl)
-    ϕl .= exp.(μl ./ RT) ./ Zl
-    ϕv = virial_phi(model,p,T,y) #virial fugacity coefficient, skips volume calculation
+    lnϕl,_ = lnϕ(model,p,T,x,phase = :l,vol = vlx)
+    ϕl = K = lnϕl
+    ϕl .= exp.(lnϕl)
+    if high_conditions
+        lnϕv,_ = lnϕ(model,p,T,y,phase = :v)
+        ϕv = lnϕv
+        ϕv .= exp.(lnϕv)
+    else
+        ϕv = virial_phi(model,p,T,y)
+    end
+     #virial fugacity coefficient, skips volume calculation
+   
     if all(!isnan,@view(ϕv[in_media]))
         K .= ϕl ./ ϕv
     end
     K_r = @view K[in_media]
+    #if all(>(1),K_r) || all(<(1),K_r) #no separation,use defaults
+    #    K .= y ./ x
+    #end
     if FugEnum.is_bubble(method)
         x_r = @view x[in_media]
         y_r = rr_flash_vapor(K_r,x_r,zero(eltype(K)))
@@ -278,11 +306,16 @@ function improve_bubbledew_suggestion(model,p0,T0,x,y,method,in_media,high_condi
         x_r = rr_flash_liquid(K_r,y_r,one(eltype(K)))
         xx = index_expansion(x_r,in_media)
         xx ./= sum(xx)
-        vl = volume(model,p,T,xx,phase = :l)
         vv = volume(model,p,T,y,phase = :v)/sum(y)
+        vl = volume(model,p,T,xx,phase = :l)
+        if high_conditions && isnan(vl)
+            vl = volume(model,p,T,x)
+        end
         return p,T,xx,y,vl,vv
     end
 end
+
+
 
 _virial(model,V,T,z) = second_virial_coefficient(model,T,z)
 
@@ -383,18 +416,27 @@ function bubble_pressure(model::EoSModel, T, x, method::ThermodynamicMethod)
     x = x/sum(x)
     T = float(T)
     model_r,idx_r = index_reduction(model,x)
-    if length(model_r)==1
+    if length(model_r)==1 && !is_pseudo_pure(model)
         (P_sat,v_l,v_v) = saturation_pressure(model_r,T)
         return (P_sat,v_l,v_v,x)
     end
     x_r = x[idx_r]
+
+    method_r = index_reduction(method,idx_r)
     if has_a_res(model)
-        bubble_pressure_result_primal = bubble_pressure_impl(primalval(model_r),primalval(T),primalval(x_r),index_reduction(method,idx_r))
-        bubble_pressure_result = bubble_pressure_ad(model_r,T,x_r,bubble_pressure_result_primal)
+        λmodel,λT,λx = primalval(model_r),primalval(T),primalval(x_r)
+        λresult = bubble_pressure_impl(λmodel,λT,λx,primalval(method_r))
+        tup = (model_r,T,x_r)
+        if any(has_dual,tup)
+            λtup = (λmodel,λT,λx)
+            result = bubble_pressure_ad(λresult,tup,λtup)
+        else
+            result = λresult
+        end
     else
-        bubble_pressure_result = bubble_pressure_impl(model_r,T,x_r,index_reduction(method,idx_r))
+        result = bubble_pressure_impl(model_r,T,x_r,method_r)
     end
-    (P_sat, v_l, v_v, y_r) = bubble_pressure_result
+    (P_sat, v_l, v_v, y_r) = result
     y = index_expansion(y_r,idx_r)
     converged = bubbledew_check(model,P_sat,T,v_v,v_l,y,x)
     if converged
@@ -511,7 +553,7 @@ function bubble_temperature_init(model,p,x,vol0,T0,y0,volatiles)
 end
 
 """
-    bubble_temperature(model::EoSModel, p, x,method::BubblePointMethod = ChemPotBubbleTemperature())
+    bubble_temperature(model::EoSModel, p, x,method::ThermodynamicMethod = ChemPotBubbleTemperature())
 
 Calculates the bubble temperature and properties at a given pressure `p`.
 Returns a tuple, containing:
@@ -552,21 +594,28 @@ function bubble_temperature(model::EoSModel, p, x, method::ThermodynamicMethod)
     x = x/sum(x)
     p = float(p)
     model_r,idx_r = index_reduction(model,x)
-    if length(model_r)==1
+    if length(model_r)==1 && !is_pseudo_pure(model)
         (T_sat,v_l,v_v) = saturation_temperature(model_r,p)
         return (T_sat,v_l,v_v,x)
     end
     x_r = x[idx_r]
 
-
+    method_r = index_reduction(method,idx_r)
     if has_a_res(model)
-        bubble_temperature_result_primal =  bubble_temperature_impl(primalval(model_r),primalval(p),primalval(x_r),index_reduction(method,idx_r))
-        bubble_temperature_result =  bubble_temperature_ad(model_r,p,x_r,bubble_temperature_result_primal)
+        λmodel,λp,λx = primalval(model_r),primalval(p),primalval(x_r)
+        λresult = bubble_temperature_impl(λmodel,λp,λx,primalval(method_r))
+        tup = (model_r,p,x_r)
+        if any(has_dual,tup)
+            λtup = (λmodel,λp,λx)
+            result = bubble_temperature_ad(λresult,tup,λtup)
+        else
+            result = λresult
+        end
     else
-        bubble_temperature_result =  bubble_temperature_impl(model_r,p,x_r,index_reduction(method,idx_r))
+        result = bubble_temperature_impl(model_r,p,x_r,method_r)
     end
 
-    (T_sat, v_l, v_v, y_r) = bubble_temperature_result
+    (T_sat, v_l, v_v, y_r) = result
     y = index_expansion(y_r,idx_r)
     converged = bubbledew_check(model,p,T_sat,v_v,v_l,y,x)
     if converged

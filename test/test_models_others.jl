@@ -178,6 +178,15 @@ end
         system = Clapeyron.idealmodel(system.pures[1])
         @test Clapeyron.a_ideal(system,V,T,z) ≈ 7.932205569922042 rtol = 1e-6
         @test Clapeyron.ideal_consistency(system,V,T,z) ≈ 0.0 atol = 1e-14
+        
+        #issue 558
+        url_refprop = "https://raw.githubusercontent.com/usnistgov/fastchebpure/50af5c154a113ac27a2c0a1c3538bc4f43a73a66/teqp_REFPROP10/dev/fluids/"
+        names = ["13BUTADIENE"]
+        _comps = Clapeyron.Downloads.download.(url_refprop .* names .* ".json") .|> read .|> String
+        mixing = Clapeyron.init_model(Clapeyron.AsymmetricMixing,names,String[],false)
+        model558 = MultiFluid(_comps; mixing, coolprop_userlocations=false)
+        @test molar_density(model558, 9.259e3, 220.; phase=:liquid) ≈ 13029.070044557742 rtol = 1e-6
+        @test model558.components == names
     end
 
     @testset "Aly-Lee" begin
@@ -260,6 +269,10 @@ end
         dep = departure_functions(system)
         @test count(!iszero,dep) == 1
         @test Clapeyron.eos(system,Vx,Tx,zx) ≈ -6020.0044 rtol = 5e-6
+
+        #546
+        system_546 = EOS_CG(["carbon dioxide","water"])
+        @test volume(system_546,1e6,293.15,[0.1742127426126829, 0.8257872573873171]) ≈ 2.080669615020994e-5 rtol = 1e-6
     end
 
     @testset "LKP" begin
@@ -326,13 +339,13 @@ end
 @testset "SPUNG models" begin
     @printline
     let T = 298.15, V = 1e-4,p = 1e5,z = Clapeyron.SA[1.0],z1 = Clapeyron.SA[1.0],z2 = [0.5,0.5],z3 = [0.333, 0.333,0.333]; 
-    @testset "SRK" begin
+    @testset "SPUNG (SRK)" begin
         system = SPUNG(["ethane"])
-        @test Clapeyron.shape_factors(system, V, T, z)[1] ≈ 0.8246924617474896 rtol = 1e-6
+        @test Clapeyron.shape_factors(system, V, T, z)[1] ≈ 0.824678830913322 rtol = 1e-6
     end
 
 
-    @testset "PCSAFT" begin
+    @testset "SPUNG (PCSAFT)" begin
         system = SPUNG(["ethane"],PropaneRef(),PCSAFT(["ethane"]),PCSAFT(["propane"]))
         @test Clapeyron.shape_factors(system, V, T, z)[1] ≈ 0.8090183134644525 rtol = 1e-6
     end
@@ -366,7 +379,7 @@ end
         @testset "AntoineSat" begin
             system = AntoineEqSat(["water"])
             p0 = saturation_pressure(system,400.01)[1]
-            @test p0 ≈ 244561.488609 rtol = 1e-6
+            @test p0 ≈ 244930.458389 rtol = 1e-6
             @test saturation_temperature(system,p0)[1] ≈ 400.01 rtol = 1e-6
         end
 

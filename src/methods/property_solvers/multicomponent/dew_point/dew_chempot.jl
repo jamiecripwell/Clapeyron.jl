@@ -25,6 +25,14 @@ struct ChemPotDewPressure{T} <: DewPointMethod
     ss::Bool
 end
 
+function Solvers.primalval(method::ChemPotDewPressure{T}) where T
+    if T == Nothing
+        return Solvers.primalval_struct(method,T)
+    else
+        return Solvers.primalval_struct(method,Solvers.primal_eltype(T))
+    end
+end
+
 function ChemPotDewPressure(;vol0 = nothing,
                                 p0 = nothing,
                                 x0 = nothing,
@@ -67,27 +75,30 @@ function ChemPotDewPressure(;vol0 = nothing,
 end
 
 function dew_pressure_impl(model::EoSModel, T, y,method::ChemPotDewPressure)
-
     is_non_condensable = !isnothing(method.noncondensables)
     condensables = comps_in_equilibria(component_list(model),method.noncondensables)
     model_x,_ = index_reduction(model,condensables)
     p0,vl,vv,x0 = dew_pressure_init(model,T,y,method.vol0,method.p0,method.x0,condensables)
     x0 = x0[condensables]
 
-    if is_non_condensable
-        ηl0 = η_from_v(model_x,vl,T,x0)
-    else
-        ηl0 = η_from_v(model,vl,T,x0)
-    end
-
+    ηl0 = is_non_condensable ? η_from_v(model_x,vl,T,x0) : η_from_v(model,vl,T,x0)
     ηv0 = η_from_v(model,vv,T,y)
-    _,idx_max = findmax(x0)
-    v0 = vcat(ηl0,ηv0,deleteat(x0,idx_max)) #select component with highest fraction as pivot
-    f!(F,z) = Obj_dew_pressure(model,model_x, F, T, z[1], z[2], z[3:end], y, condensables, idx_max)
-    r = Solvers.nlsolve(f!,v0,LineSearch(Newton2(v0)),NLSolvers.NEqOptions(method))
+    idx_max = argmax(x0)
+
+    v0 = Vector{eltype(x0)}(undef, 2+length(x0)-1)
+    v0[1],v0[2] = ηl0,ηv0
+    copy_without_pivot!(view(v0, 3:lastindex(v0)), x0, idx_max) #select component with highest fraction as pivot
+    f! = let model=model, model_x=model_x, T=T, y=y, condensables=condensables, idx_max=idx_max
+        (F,z) -> Obj_dew_pressure(model, model_x, F, T, z[1], z[2], @view(z[3:end]), y, condensables, idx_max)
+    end
+    r = Solvers.nlsolve(f!, v0,
+            LineSearch(Newton2(v0)),
+            NLSolvers.NEqOptions(method),
+            ForwardDiff.Chunk{min(length(v0), 8)}()
+        )
     sol = Solvers.x_sol(r)
-    !all(<(r.options.f_abstol),r.info.best_residual) && (sol .= NaN)
-    x_r = FractionVector(sol[3:end],idx_max)
+    !__check_convergence(r) && (sol .= NaN)
+    x_r = FractionVector(@view(sol[3:end]),idx_max)
     v_l = v_from_η(model,model_x,sol[1],T,x_r)
     v_v = v_from_η(model,sol[2],T,y)
     P_sat = pressure(model,v_v,T,y)
@@ -102,9 +113,9 @@ function Obj_dew_pressure(model::EoSModel,model_x, F, T, ηl, ηv, x, y, _view, 
     v = (vv,vl)
     w = (y,xx)
     if all(_view)
-        return μp_equality2(model,nothing, F, Tspec(T), v, w, _view)
+        return μp_equality2(model, nothing, F, Tspec(T), v, w, _view)
     else
-        return μp_equality2(model,model_x, F, Tspec(T), v, w, _view)
+        return μp_equality2(model, model_x, F, Tspec(T), v, w, _view)
     end
 end
 
@@ -116,7 +127,7 @@ It directly solves the equality of chemical potentials system of equations.
 
 Inputs:
 - `x0 = nothing`: optional, initial guess for the liquid phase composition
-- `T0  =nothing`: optional, initial guess for the dew temperature `[K]`
+- `T0  = nothing`: optional, initial guess for the dew temperature `[K]`
 - `vol0 = nothing`: optional, initial guesses for the liquid and vapor phase volumes `[m³]`
 - `atol = 1e-8`: optional, absolute tolerance of the non linear system of equations
 - `rtol = 1e-12`: optional, relative tolerance of the non linear system of equations
@@ -133,6 +144,14 @@ struct ChemPotDewTemperature{T} <: DewPointMethod
     rtol::Float64
     max_iters::Int
     ss::Bool
+end
+
+function Solvers.primalval(method::ChemPotDewTemperature{T}) where T
+    if T == Nothing
+        return Solvers.primalval_struct(method,T)
+    else
+        return Solvers.primalval_struct(method,Solvers.primal_eltype(T))
+    end
 end
 
 function ChemPotDewTemperature(;vol0 = nothing,
@@ -177,29 +196,37 @@ function ChemPotDewTemperature(;vol0 = nothing,
 end
 
 function dew_temperature_impl(model::EoSModel,p,y,method::ChemPotDewTemperature)
-
-    is_non_condensable = !isnothing(method.noncondensables)
+    # is_non_condensable = !isnothing(method.noncondensables)
     condensables = comps_in_equilibria(component_list(model),method.noncondensables)
     model_x,_ = index_reduction(model,condensables)
     T0,vl,vv,x0 = dew_temperature_init(model,p,y,method.vol0,method.T0,method.x0,condensables)
     x0 = x0[condensables]
     
-    if is_non_condensable
-        ηl0 = η_from_v(model_x,vl,T0,x0)
-    else
-        ηl0 = η_from_v(model,vl,T0,x0)
-    end
+    # if is_non_condensable
+    #     ηl0 = η_from_v(model_x,vl,T0,x0)
+    # else
+    #     ηl0 = η_from_v(model,vl,T0,x0)
+    # end
 
     ηl = η_from_v(model,model_x,vl,T0,x0)
     ηv = η_from_v(model,vv,T0,y)
-    _,idx_max = findmax(x0)
-    v0 = vcat(T0,ηl,ηv,deleteat(x0,idx_max)) #select component with highest fraction as pivot
-    f!(F,z) = Obj_dew_temperature(model,model_x, F, p, z[1], z[2], z[3], z[4:end], y, condensables,idx_max)
-    r = Solvers.nlsolve(f!,v0,LineSearch(Newton2(v0)),NLSolvers.NEqOptions(method))
+    idx_max = argmax(x0)
+
+    v0 = Vector{eltype(x0)}(undef, 3+length(x0)-1)
+    v0[1],v0[2],v0[3] = T0,ηl,ηv
+    copy_without_pivot!(view(v0, 4:lastindex(v0)), x0, idx_max) #select component with highest fraction as pivot
+    f! = let model=model, model_x=model_x, p=p, y=y, condensables=condensables, idx_max=idx_max
+        (F,z) -> Obj_dew_temperature(model, model_x, F, p, z[1], z[2], z[3], @view(z[4:end]), y, condensables, idx_max)
+    end
+    r = Solvers.nlsolve(f!, v0,
+            LineSearch(Newton2(v0)),
+            NLSolvers.NEqOptions(method),
+            ForwardDiff.Chunk{min(length(v0), 8)}()
+        )
     sol = Solvers.x_sol(r)
-    !all(<(r.options.f_abstol),r.info.best_residual) && (sol .= NaN)
+    !__check_convergence(r) && (sol .= NaN)
     T   = sol[1]
-    x_r = FractionVector(sol[4:end],idx_max)
+    x_r = FractionVector(@view(sol[4:end]),idx_max)
     v_l = v_from_η(model,model_x,sol[2],T,x_r)
     v_v = v_from_η(model,sol[3],T,y)
     x = index_expansion(x_r,condensables)

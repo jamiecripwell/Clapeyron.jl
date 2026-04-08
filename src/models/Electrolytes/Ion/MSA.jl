@@ -10,6 +10,7 @@ export MSA
 """
     MSA(solvents::Array{String,1},
         ions::Array{String,1};
+        charges = nothing,
         RSPmodel = ConstRSP,
         userlocations = String[],
         RSPmodel_userlocations = String[],
@@ -24,9 +25,13 @@ This function is used to create a Mean Spherical Approximation model. The MSA te
 ## References
 1. Blum, L. (1974). Solution of a model for the solvent-electrolyte interactions in the mean spherical approximation. The Journal of Chemical Physics, 61(5), 2129–2133. [doi:10.1063/1.1682224](https://doi.org/10.1063/1.1682224)
 """
-function MSA(solvents,ions; RSPmodel=ConstRSP, userlocations=String[], RSPmodel_userlocations=String[], verbose=false)
-    components = deepcopy(ions)
-    prepend!(components,solvents)
+function MSA(solvents,ions; charges = nothing, RSPmodel=ConstRSP, userlocations=String[], RSPmodel_userlocations=String[], verbose=false)
+    solvents = format_components(solvents)
+    ions = format_components(ions)
+    components = vcat(solvents, ions)
+
+    userlocations = normalize_userlocations(userlocations)
+    RSPmodel_userlocations = normalize_userlocations(RSPmodel_userlocations)
 
     references = default_references(MSA)
 
@@ -74,14 +79,15 @@ function screening_length(V, T, z, Z, σ, ϵ_r)
     nc = length(Z)
     Δ = 1-π*ρ/6*sum(z[i]*σ[i]^3 for i ∈ 1:nc)
     κ = debye_length(V,T,z,ϵ_r,Z)
-    Γold = κ
+    k1 = sqrt(π*e_c^2*ρ/(4π*ϵ_0*ϵ_r*k_B*T))
+    Γold = κ*oneunit(k1)
     _0 = zero(Γold)
     iszero(primalval(Γold)) && return _0
-    Γnew = _0
+    
     iter = 1
     tol = oneunit(_0)
-    k1 = sqrt(π*e_c^2*ρ/(4π*ϵ_0*ϵ_r*k_B*T))
-
+    
+    Γnew = _0*k1
     #step 1: bounded SS
     while tol>1e-12 && iter < 100
         Ω = 1+π*ρ/(2*Δ)*sum(z[i]*σ[i]^3/(1+Γold*σ[i]) for i ∈ iions)
