@@ -213,16 +213,41 @@ function _Tproperty(model::EoSModel,p,prop,z = SA[1.0],
 
   n = sum(z)
   v0_edge,dpdT = x0_edge_temperature(model,p,z)
+  
+
+  #check pure saturation envelopes
+  Tmin_sat,Tmax_sat = extrema(xx -> T_from_dpdT(xx,p),dpdT)
+  prop_puresat_l = property(model,p,Tmin_sat,z,phase = :l)
+  prop_puresat_v = property(model,p,Tmax_sat,z,phase = :v)
+  βpuresat = (prop - prop_puresat_l)/(prop_puresat_v - prop_puresat_l)
+
+  if !(0 <= βpuresat <= 1)  #TODO: check if this is valid
+
+    verbose && @info "minimum saturation temperature:         $Tmin_sat"
+    verbose && @info "maximum saturation temperature:         $Tmax_sat"
+    verbose && @info "property at minimum sat point:          $prop_puresat_l"
+    verbose && @info "property at maximum sat point:          $prop_puresat_v"
+
+    phase_by_puresat = βpuresat > 1 ? :vapour : :liquid
+    verbose && @info "temperature($property) outside pure fluid saturation boundaries ($phase_by_puresat)"
+    T_by_puresat = βpuresat > 1 ? Tmax_sat : Tmin_sat
+    res_puresat = __Tproperty(model,p,prop,z,property,rootsolver,phase_by_puresat,abstol,reltol,threaded,T_by_puresat)
+    return __Tproperty_check(res_puresat,verbose)
+  end
+
   T0_bubble,T0_dew = v0_edge
   edge,crit,status = _edge_temperature(model,p,z,v0_edge)
   T_edge,v_l,v_v = edge
 
   if status == :supercritical
+
+
     #=
     TODO: what to do in this zone?
     we are smooth in the p-v curves,
     but there are still phase separation up until the mixture critical point. =#
     Tc,Pc,Vc = crit
+    
     verbose && @info "mechanical critical pressure:           $Pc"
     verbose && @info "mechanical critical temperature:        $Tc"
     verbose && @info "mechanical critical molar volume        $Vc"
@@ -266,57 +291,80 @@ function _Tproperty(model::EoSModel,p,prop,z = SA[1.0],
   prop_l = spec_to_vt(model,v_l,T_edge,z,property)
   prop_v = spec_to_vt(model,v_v,T_edge,z,property)
 
-  verbose && @info "property at liquid edge:     $prop_l"
-  verbose && @info "property at vapour edge:     $prop_v"
-  verbose && @info "temperature at edge point:   $T_edge"
+  verbose && @info "property at liquid edge:                $prop_l"
+  verbose && @info "property at vapour edge:                $prop_v"
+  verbose && @info "temperature at edge point:              $T_edge"
 
-  β = (prop - prop_l)/(prop_v - prop_l)
+  β_edge = (prop - prop_l)/(prop_v - prop_l)
 
   #we are inside equilibria.
-  if 0 <= β <= 1
+  if 0 <= β_edge <= 1
     verbose && @info "property between the liquid and vapour edges, in the phase change region"
-    return T_edge,:eq
+    Tbub0,Tdew0 = v0_edge
+
+    T_edge_interp = β_edge*Tdew0 + (1 - β_edge)*Tbub0
+    β_T_edge = (T_edge - Tdew0)/(Tbub0 - Tdew0)
+    
+    ϕ = 0.3 #P_edge is in the center of the bubble and dew approximations, return P_edge
+    if ϕ <= β_T_edge <= (1 - ϕ)
+      return T_edge_interp,:eq
+    end
+
+    if β_T_edge < 0.3
+      T0x = Tbub0
+      verbose && @info "property in equilibria, mostly liquid with vapour, checking dew point"
+      #we search between the liquid edge and the dew temperature
+      prop_edge,new_phase = property(model,p,Tbub0,z,phase = :l),:vapour
+    else
+      T0x = Tdew0
+      verbose && @info "property in equilibria, mostly vapour with liquid, checking bubble point"
+      #we search between the vapour edge and the bubble temperature
+      prop_edge,new_phase = property(model,p,Tdew0,z,phase = :v),:liquid
+    end
+  else
+    T0x = T_edge
+    if β_edge > 1
+      prop_edge,new_phase = prop_v,:vapour
+    else
+      prop_edge,new_phase = prop_l,:liquid
+    end
   end
 
-  new_phase = β > 1 ? :vapour : :liquid
-  res = __Tproperty(model,p,prop,z,property,rootsolver,new_phase,abstol,reltol,threaded,T_edge)
-  res[2] == :failure && return __Tproperty_check(res,verbose,T_edge)
-
-  if β > 1 #check vapour branch
+  if is_vapour(new_phase) #check vapour branch
     dew_method = dew_temperature_tproperty_method(model,p,T0_dew,z,dpdT)
     dew = dew_temperature(model,p,z,dew_method)
     T_dew,_,v_dew,_ = dew
     prob_dew = spec_to_vt(model,v_dew*n,T_dew,z,property)
 
-    verbose && @info "temperature at dew point:  $T_dew"
-    verbose && @info "property at dew point:     $prob_dew"
+    verbose && @info "temperature at dew point:               $T_dew"
+    verbose && @info "property at dew point:                  $prob_dew"
 
-    β_dew = (prop - prop_l)/(prob_dew - prop_l)
-
+    β_dew = (prop - prop_edge)/(prob_dew - prop_edge)
     0 < β_dew < 1 && verbose && @info "pseudo-vapour temperature($property) in phase change region (between edge and dew point)."
-    0 < β_dew < 1 && return __Tproperty_check((res[1],:eq),verbose,T_edge)
-    verbose && @info "vapour temperature($property) outside the phase change region"
-    return __Tproperty_check(res,verbose)
+    T_interp = β_dew*T_dew + (1 - β_dew)*T_edge
+    0 < β_dew < 1 && return __Tproperty_check((T_interp,:eq),verbose,T_edge)
+    T0x = T_dew
   end
 
-  if β < 0 #check liquid branch
+  if is_liquid(new_phase) #check liquid branch
     bubble_method = bubble_temperature_tproperty_method(model,p,T0_bubble,z,dpdT)
     bubble = bubble_temperature(model,p,z,bubble_method)
     T_bubble,v_bubble,_,_ = bubble
     prob_bubble = spec_to_vt(model,v_bubble*n,T_bubble,z,property)
 
-    verbose && @info "temperature at bubble point:  $T_bubble"
-    verbose && @info "property at bubble point:     $prob_bubble"
+    verbose && @info "temperature at bubble point:            $T_bubble"
+    verbose && @info "property at bubble point:               $prob_bubble"
 
-    β_bubble = (prop - prop_l)/(prob_bubble - prop_l)
+    β_bubble = (prop - prop_edge)/(prob_bubble - prop_edge)
+    T_interp = β_bubble*T_bubble + (1 - β_bubble)*T_edge
     0 < β_bubble < 1 && verbose && @info "pseudo-liquid temperature($property) in phase change region (between edge and bubble point)."
-    0 < β_bubble < 1 && return __Tproperty_check((res[1],:eq),verbose,T_edge)
-    verbose && @info "liquid temperature($property) outside the phase change region"
-    return __Tproperty_check(res,verbose)
+    0 < β_bubble < 1 && return __Tproperty_check((T_interp,:eq),verbose,T_edge)
+    T0x = T_bubble
   end
 
-  _0 = zero(Base.promote_eltype(model,p,prop,z))
-  return __Tproperty_check((_0/_0,:failure),verbose)
+  verbose && @info "$new_phase temperature($property) outside the phase change region"
+  res = __Tproperty(model,p,prop,z,property,rootsolver,new_phase,abstol,reltol,threaded,T0x)
+  return __Tproperty_check(res,verbose)
 end
 
 function Tproperty_pure(model,p,x,z,property::F,rootsolver,phase,abstol,reltol,verbose,threaded,T0) where F
@@ -358,7 +406,7 @@ function Tproperty_pure(model,p,x,z,property::F,rootsolver,phase,abstol,reltol,v
       is_vapour(phase0) && verbose && @info "temperature($property) > saturation temperature"
       return __Tproperty(model,p,x,z,property,rootsolver,phase0,abstol,reltol,threaded,Ts)
     else
-      #verbose && @warn "$property value in phase change region. Will return temperature at saturation point"
+      verbose && @info "$property between the liquid and vapour edges, in the phase change region"
       return Ts,:eq
     end
 end
@@ -378,6 +426,7 @@ function __Tproperty(model,p,prop,z,property::F,rootsolver,phase,abstol,reltol,t
 end
 
 __Tproperty(model,p,prop,z,property::F,phase,T0) where F = __Tproperty(model,p,prop,z,property,Roots.Order0(),phase,1e-15,1e-15,true,T0)
+__Tproperty(model,p,prop,z,property::F,phase,T0,verbose::Bool) where F = __Tproperty(model,p,prop,z,property,Roots.Order0(),phase,1e-15,1e-15,verbose,T0)
 
 function Tproperty_impl(model,p,prop,z,property::F,rootsolver,phase,abstol,reltol,threaded,T0) where F
   if is_unknown(phase)

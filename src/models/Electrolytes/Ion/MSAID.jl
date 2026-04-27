@@ -33,7 +33,7 @@ This function is used to create a Mean Spherical Approximation model. The MSAID 
 ## References
 1. Blum, L. (1974). Solution of a model for the solvent‐electrolyte interactions in the mean spherical approximation, 61, 2129–2133.
 """
-function MSAID(solvents,ions; charges = nothing, userlocations, verbose=false)
+function MSAID(solvents,ions; charge = nothing, userlocations, verbose=false)
     solvents = format_components(solvents)
     ions = format_components(ions)
     components = vcat(solvents, ions)
@@ -58,7 +58,7 @@ function MSAID(solvents,ions; charges = nothing, userlocations, verbose=false)
     packagedparams = MSAIDParam(sigma,dipole,SingleParam("charge",components,Z))
 
     references = String["10.1063/1.1682224"]
-    if count(iszero,charge.values) != 1
+    if count(iszero,Z) != 1
         throw(error("MSAID only supports one neutral solvent."))
     end
     model = MSAID(components, packagedparams, references)

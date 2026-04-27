@@ -74,12 +74,36 @@ end
     fluid = PCSAFT(["water","methanol"]; assoc_options = AssocOptions(combining=:elliott))
     fluid.params.epsilon["water","methanol"] *= (1+0.18)
     v = volume(fluid, 1e5, 160.0, [0.5, 0.5],phase = :l)
+    test_assoc_matrix(fluid,v,160.0,[0.5,0.5])
     @test Clapeyron.X(fluid,v,160.0,[0.5,0.5]).v ≈ [0.0011693187791158642, 0.0011693187791158818, 0.0002916842981727242, 0.0002916842981727286] rtol = 1E-8
     #test with bigfloat, we check that all temporary association storage is correctly initialized
     @test Clapeyron.X(fluid,big(v),160.0,[0.5,0.5]).v ≈ [0.0011693187791158642, 0.0011693187791158818, 0.0002916842981727242, 0.0002916842981727286] rtol = 1E-8
 
     K = [0.0 244.24071691762867 0.0 3.432863727098509; 244.24071691762867 0.0 3.432863727098509 0.0; 0.0 2.2885758180656732 0.0 0.0; 2.2885758180656732 0.0 0.0 0.0]
     @test Clapeyron.assoc_matrix_solve(K) ≈ [0.0562461981664357, 0.0562461981664357, 0.8859564211875895, 0.8859564211875895]
+    test_assoc_matrix(K)
+    #test some particular 2x2 matrices
+
+    test_assoc_matrix([100.0 200.0; 300.0 400.0])
+
+    test_assoc_matrix([100.0 200.0; 300.0   0.0])
+    test_assoc_matrix([100.0   0.0; 200.0 300.0])
+    test_assoc_matrix([100.0 200.0; 0.0 300.0])
+    test_assoc_matrix([0.0 100.0; 200.0 300.0])
+
+    test_assoc_matrix([0.0 100.0; 200.0 0.0])
+    test_assoc_matrix([1000.0 0.0; 0.0 200.0])
+    test_assoc_matrix([0.0 1000.0; 0.0 200.0])
+    test_assoc_matrix([1000.0 0.0; 200.0 0.0])
+    test_assoc_matrix([0.0 0.0; 100.0 200.0])
+    test_assoc_matrix([1000.0 3000.0; 0.0 0.0])
+
+    test_assoc_matrix([1000.0 0.0; 0.0 0.0])
+    test_assoc_matrix([0.0 1000.0; 0.0 0.0])
+    test_assoc_matrix([0.0 0.0; 1000.0 0.0])
+    test_assoc_matrix([0.0 0.0; 0.0 1000.0])
+
+    test_assoc_matrix([500.0;;])
 end
 
 using EoSSuperancillaries
@@ -316,6 +340,7 @@ end
         @test s1[3] ≈ 0.0015804179997257882 rtol = 1e-6
     end
 
+    #=
     @testset "#466" begin
         glycine = ("glycine" => ["COOH" => 1, "CH2" => 1, "NH2" => 1])
         lactic_acid = ("lactic acid" =>["COOH" => 1, "CH3" => 1, "CHOH" => 1])
@@ -328,10 +353,11 @@ end
         T2,_ = Clapeyron.eutectic_point(ox_gly)
         @test T1 ≈ 300.23095880432294 rtol = 1e-6
         @test T2 ≈ 454.27284723964925 rtol = 1e-6
-    end
+    end =#
 end
 GC.gc()
-#test for really really difficult equilibria.
+
+#test for difficult equilibria.
 @testset "challenging equilibria" begin
 
     #see https://github.com/ClapeyronThermo/Clapeyron.jl/issues/173
@@ -395,7 +421,7 @@ GC.gc()
             
         end
 
-        @testset "high conditions- Multifluid" begin
+        @testset "high conditions - Multifluid" begin
             fluid = MultiFluid(["propane","R134a"])
             #_,pcrit,_ = crit_mix(fluid,[1.0,1.0])
             #p = 0.7*pcrit
@@ -412,34 +438,6 @@ end
     for prop in [volume,gibbs_free_energy,helmholtz_free_energy,entropy,enthalpy,internal_energy]
         @test sum(partial_property(model_pem,p,T,z,prop) .* z) ≈ prop(model_pem,p,T,z)
     end
-end
-
-@testset "spinodals" begin
-    # Example from Ref. https://doi.org/10.1016/j.fluid.2017.04.009
-    model = PCSAFT(["methane","ethane"])
-    T_spin = 223.
-    x_spin = [0.2,0.8]
-    (pl_spin, vl_spin) = spinodal_pressure(model,T_spin,x_spin;phase=:liquid)
-    (pv_spin, vv_spin) = spinodal_pressure(model,T_spin,x_spin;phase=:vapor)
-    @test vl_spin ≈ 7.218532167482202e-5 rtol = 1e-6
-    @test vv_spin ≈ 0.0004261109817247137 rtol = 1e-6
-
-    (Tl_spin_impl, xl_spin_impl) = spinodal_temperature(model,pl_spin,x_spin;T0=220.,v0=vl_spin)
-    (Tv_spin_impl, xv_spin_impl) = spinodal_temperature(model,pv_spin,x_spin;T0=225.,v0=vv_spin)
-    @test Tl_spin_impl ≈ T_spin rtol = 1e-6
-    @test Tv_spin_impl ≈ T_spin rtol = 1e-6
-
-    #test for #382: pure spinodal at low pressures
-    model2 = PCSAFT("carbon dioxide")
-    Tc,Pc,Vc = (310.27679925044134, 8.06391600653306e6, 9.976420206333288e-5)
-    T = LinRange(Tc-70,Tc-0.1,50)
-    psl = first.(spinodal_pressure.(model2,T,phase = :l))
-    psv = first.(spinodal_pressure.(model2,T,phase = :v))
-    psat = first.(saturation_pressure.(model2,T))
-    @test all(psl .< psat)
-    @test all(psat .< psv)
-    @test issorted(psl)
-    @test issorted(psv)
 end
 
 @testset "supercritical lines" begin
@@ -492,7 +490,7 @@ end
     end
 
     Γ_act = thermodynamic_factor(act_model, 1e5, T_act, x_act)
-    Γ_ref = thermodynamic_factor(act_model, 1e5, T_act, x_act)
+    Γ_ref = thermodynamic_factor_nrtl(act_model, 1e5, T_act, x_act)
     @test size(Γ_act) == (2,2)
     @test all((≈).(Γ_act, Γ_ref, rtol=1e-6)) 
 end

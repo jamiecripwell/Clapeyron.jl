@@ -1,16 +1,12 @@
-# v0.6.22
+# v0.6.24
 
 ## New Features
 
-- Implicit differentiation: the core implicit differentiation routines were replaced by `IFTDuals.ift`.
-- Experimental: `AssocOptions` supports the `implicit_ad` option to calculate derivatives of the association solver via `IFTDuals`
-- Implicit differentiation is now enabled in PH flash and PS flash.
-- Experimental: new tpd function: `Clapeyron.tpd2`, that returns a `TPDResult` struct instead of a tuple of vectors
-- Experimental: New model wrapper for electrolyte wrappers: `MeanIonicApproach` with support for `tp_flash`
+- Association: better initial points and faster evaluation via compression of the association matrix.
+- `GeneralizedXYFlash`: added new `verbose` option
+- `Tproperty`/`Pproperty`: better initial points for poins inside the phase change region.
+- `spinodal_pressure`/`spinodal_temperature`: initial points now use `edge_temperature`/`edge_pressure` instead of bubble/dew calculations, improving speed and stability, especially with conditions near the mixture critical point
 
 ## Bug fixes
 
-- Fixes in `iPCSAFT`
-- Fixes in electrolyte routines
-- Fixes in Multifluid initial volume
-- Fixes in `MultiPhaseTPFlash`
+- Fixes in `split_model` when indices aren't ordered

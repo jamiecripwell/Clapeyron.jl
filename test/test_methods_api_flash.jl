@@ -9,12 +9,16 @@
         method = RRTPFlash()
         @test Clapeyron.tp_flash(system, p, T, z, method)[3] ≈ -6.539976318817461 rtol = 1e-6
 
+        #=
+        Test deprecated
+        The PR tests in MichelsenTPFlash (#454) already test this
         #test for initialization when K suggests single phase but it could be solved supposing bubble or dew conditions.
         substances = ["water", "methanol", "propyleneglycol","methyloxirane"]
         pcp_system = PCPSAFT(substances)
         res = Clapeyron.tp_flash2(pcp_system, 25_000.0, 300.15, [1.0, 1.0, 1.0, 1.0], RRTPFlash())
         @test res.data.g ≈ -8.900576759774916 rtol = 1e-6
-
+        
+        =#
         #https://julialang.zulipchat.com/#narrow/channel/265161-Clapeyron.2Ejl/topic/The.20meaning.20of.20subcooled.20liquid.20flash.20results
         z_zulip1 = [0.25, 0.25, 0.25, 0.25]
         p_zulip1 = 1e5
@@ -35,10 +39,11 @@
         #https://julialang.zulipchat.com/#narrow/channel/265161-Clapeyron.2Ejl/topic/The.20meaning.20of.20subcooled.20liquid.20flash.20results/near/534216551
         model_zulip2 = PR(["n-butane", "n-pentane", "n-hexane", "n-heptane"])
         res3 = Clapeyron.tp_flash2(model_zulip2, 1e5 , 450, z_zulip1, RRTPFlash(equilibrium=:vle))
-
+        res3_pt = Clapeyron.PT.flash(model_zulip2, 1e5 , 450, z_zulip1, RRTPFlash(equilibrium=:vle))
         if Clapeyron.numphases(res3) == 2
             @test isone(res3.fractions[2])
             @test res3.volumes[1] ≈ 0.03683358805181434 rtol = 1e-6
+            @test res3.volumes[1] ≈ res3_pt.volumes[1]
         else
             @test res3.volumes[1] ≈ 0.03683358805181434 rtol = 1e-6
         end
@@ -557,6 +562,12 @@ end
     dsdp_ad = Clapeyron.Solvers.derivative(f554,1.5)
     dsdp_finite = Clapeyron.derivx(f554,1.5)
     @test dsdp_ad ≈ dsdp_finite rtol = 1e-6
+
+    #issue 563
+    model563 = cPR(["hexane","r134a"],idealmodel = ReidIdeal)
+
+    @test Clapeyron.PH.temperature(model563,3286.398709834417,-28656.72135729674,[1.0,1.0]) ≈ 245.5036274429181 rtol = 1e-6
+    @test Clapeyron.PH.temperature(model563,4518.7856211604485,-16905.103773893403,[1.0,1.0]) ≈ 254.2216177261915 rtol = 1e-6
     #issue #390
     #=
     model = cPR(["isopentane","toluene"],idealmodel=ReidIdeal)
@@ -662,12 +673,21 @@ end
 end
 
 @testset "Tproperty/Property" begin
+    #=
+    obsolete test, Tproperty/Pproperty is now considered as an initial point to the flashes
     model1 = cPR(["propane","dodecane"])
     p = 101325.0; T = 300.0;z = [0.5,0.5]
-    h_ = enthalpy(model1,p,T,z)
-    s_ = entropy(model1,p,T,z)
+    flash1 = Clapeyron.tp_flash2(model,p,T,z)
+    h_ = enthalpy(model1,flash1)
+    s_ = entropy(model1,flash1)
+    
     @test Tproperty(model1,p,h_,z,enthalpy) ≈ T
     @test Tproperty(model1,p,s_,z,entropy) ≈ T
+    =#
+    model1 = cPR(["propane","dodecane"])
+    p = 101325.0; T = 300.0;z = [0.5,0.5]
+    
+
 
     model2 = cPR(["propane"])
     z2 = [1.]
@@ -710,6 +730,13 @@ end
     #@test Clapeyron._Pproperty(model5,450.0,0.00023,[0.5,0.5],volume)[2]  == :eq
     #@test Clapeyron._Pproperty(model5,450.0,0.000222,[0.5,0.5],volume)[2]  == :eq
     #@test Clapeyron._Pproperty(model5,450.0,0.000222,[0.5,0.5],volume)[2]  == :eq
+
+    #https://github.com/ClapeyronThermo/Clapeyron.jl/issues/563#issuecomment-4205986772
+    Tb,Td = 310.8990985869675,317.9907901983071
+    hmid = -24856.311180151133
+    fluid = cPR(["acetone", "isopentane"],idealmodel= ReidIdeal); z = [1.1, 0.9];
+    T0 = Clapeyron.Tproperty(fluid,101225.0,hmid,z,enthalpy)
+    @test Tb < T0 < Td
 end
 
 @testset "bubble/dew point algorithms" begin
@@ -730,6 +757,11 @@ end
         @test Clapeyron.bubble_pressure(system1,T,z,Clapeyron.ChemPotBubblePressure(y0 = [0.6,0.4]))[1] ≈ pres1 rtol = 1E-6
         @test Clapeyron.bubble_pressure(system1,T,z,Clapeyron.ChemPotBubblePressure(p0 = 5e4))[1] ≈ pres1 rtol = 1E-6
         @test Clapeyron.bubble_pressure(system1,T,z,Clapeyron.ChemPotBubblePressure(p0 = 5e4,y0 = [0.6,0.4]))[1] ≈ pres1 rtol = 1E-6
+        
+        #140
+        model140 = PCSAFT(["water","carbon dioxide"])
+        res140 = bubble_pressure(model140,280,Clapeyron.FractionVector(0.01),ChemPotBubblePressure(nonvolatiles = ["water"]))
+        @test res140[1] ≈ 4.0772545187410433e6 rtol = 1e-6
         GC.gc()
 
         @test Clapeyron.bubble_pressure(system1,T,z,Clapeyron.FugBubblePressure())[1] ≈ pres1 rtol = 1E-6

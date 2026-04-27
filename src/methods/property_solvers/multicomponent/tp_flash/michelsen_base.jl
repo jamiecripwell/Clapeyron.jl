@@ -339,7 +339,7 @@ function pt_flash_x0(model,p,T,n,method = GeneralizedXYFlash(),non_inx = FillArr
     else
         phasex,phasey = :unknown,:unknown
     end
-    phases = (phasex,phasey)
+    
     non_inw = (non_inx,non_iny)
     nc = length(model)
     _1,_0 = one(TT),zero(TT)
@@ -347,7 +347,7 @@ function pt_flash_x0(model,p,T,n,method = GeneralizedXYFlash(),non_inx = FillArr
     x .= z
     y .= z
     K,lnK = similar(z,TT),similar(z,TT)
-    verbose = hasfield(typeof(method),:verbose) ? getfield(method,:verbose)::Bool : false
+    verbose = get_verbosity(method)
     if !isnothing(method.K0)
         K .= _1 * method.K0
         lnK .= log.(K)
@@ -361,10 +361,10 @@ function pt_flash_x0(model,p,T,n,method = GeneralizedXYFlash(),non_inx = FillArr
         volx = zero(_1)
         voly = zero(_1) 
         if method.v0 == nothing
-            lnK,volx,voly,_ = update_K!(lnK,model,p,T,x,y,z,nothing,(nothing,nothing),phases,non_inw)
+            lnK,volx,voly,_ = update_K!(lnK,model,p,T,x,y,z,nothing,(nothing,nothing),(phasex,phasey),non_inw)
         else
             vl0,vv0 = method.v0
-            lnK,volx,voly,_ = update_K!(lnK,model,p,T,x,y,z,nothing,(vl0,vv0),phases,non_inw)
+            lnK,volx,voly,_ = update_K!(lnK,model,p,T,x,y,z,nothing,(vl0,vv0),(phasex,phasey),non_inw)
         end
         K .= exp.(lnK)
         verbose && @info "x0,y0 provided, calculating K0 via Clapeyron.update_K!"
@@ -380,8 +380,11 @@ function pt_flash_x0(model,p,T,n,method = GeneralizedXYFlash(),non_inx = FillArr
                 verbose && @info "VLE correlation failed, trying LLE initial point."
                 K .= K0_lle_init(model,p,T,z)
                 lnK .= log.(K)
+                phasex = :liquid
                 phasey = :liquid
                 phases = (:liquid,:liquid)
+            else
+                phasex,phasey = :liquid,:vapour
             end
         end
         lnK .= log.(K)
@@ -441,7 +444,7 @@ function pt_flash_x0(model,p,T,n,method = GeneralizedXYFlash(),non_inx = FillArr
     end
     iszero(volx) && (volx = volume(model,p,T,x,phase = phasex))
     iszero(voly) && (voly = volume(model,p,T,y,phase = phasey))
-    has_a_res(model) && is_liquid(VT_identify_phase(model,voly,T,y)) && (voly = Rgas(model)*T/p)
+    #has_a_res(model) && is_liquid(VT_identify_phase(model,voly,T,y)) && (voly = Rgas(model)*T/p)
     r = FlashResult(p,T,SA[x,y],SA[βl,βv],SA[volx,voly],sort = false)
     return r
 end

@@ -156,7 +156,7 @@ end
 function data(model::CubicModel, V, T, z)
     n = sum(z)
     ā, b̄, c̄ = cubic_ab(model, V, T, z)
-    return n, ā, b̄, c̄
+    return Base.promote(n, ā, b̄, c̄)
 end
 
 get_k(model::CubicModel) = cubic_get_k(model,model.mixing,model.params)
@@ -494,7 +494,7 @@ function pure_spinodal(model::DeltaCubicModel,T::K,v_lb::K,v_ub::K,phase::Symbol
     v_bracket = minmax(vx,vm)
     prob = Roots.ZeroProblem(Base.Fix2(evalpoly,dpoly),v_bracket)
     vs = Roots.solve(prob)
-    return vs - c
+    return sum(z)*(vs - c)
 end
 
 function liquid_spinodal_zero_limit(model::DeltaCubicModel,z)
@@ -539,7 +539,8 @@ function zero_pressure_impl(T,a,b,c,Δ1,Δ2,z)
     Δ = sqrt(B^2 - 4*A*C)
     vl = (-B - Δ)/(2*A) - c
     vmax = -B/(2*A) - c
-    return real(vl),real(vmax)
+    n = sum(z)
+    return n*real(vl),n*real(vmax)
 end
 
 #Δ1,Δ2 -> Ωa,Ωb infraestructure
@@ -704,8 +705,8 @@ function x0_crit_mix(model::CubicModel,z)
     V_c = volume(model,P_c,T_c,z,phase = :v)/∑z
     return (log10(V_c),T_c)
 end
-antoine_coef(model::ABCubicModel) = (6.668322465137264,6.098791871032391,-0.08318016317721941)
 
+#antoine_coef(model::ABCubicModel) = (6.668322465137264,6.098791871032391,-0.08318016317721941)
 
 function transform_params(::Type{ABCubicParam},params,components)
     n = length(components)

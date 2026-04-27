@@ -4,6 +4,7 @@ struct GCAlyLeeParam <: EoSParam
     C::SingleParam{Float64}
     D::SingleParam{Float64}
     E::SingleParam{Float64}
+    Mw::SingleParam{Float64}
     coeffs::SingleParam{NTuple{5,Float64}}
     reference_state::ReferenceState
 end
@@ -11,8 +12,9 @@ end
 abstract type GCAlyLeeModel <: IdealModel end
 @newmodelgc GCAlyLeeIdeal GCAlyLeeModel GCAlyLeeParam false
 default_references(::Type{GCAlyLeeIdeal}) = ["10.1021/acs.jced.5c00573"]
-default_locations(::Type{GCAlyLeeIdeal}) = ["ideal/GCAlyLeeIdeal.csv"]
-default_gclocations(::Type{GCAlyLeeIdeal}) = ["ideal/BurkhardtIdeal_Groups.csv"]
+default_locations(::Type{GCAlyLeeIdeal}) = ["ideal/BurkhardtIdeal/GCAlyLeeIdeal.csv","properties/molarmass_groups.csv"]
+default_gclocations(::Type{GCAlyLeeIdeal}) = ["ideal/BurkhardtIdeal/BurkhardtIdeal_groups.csv"]
+default_ignore_missing_singleparams(::Type{GCAlyLeeIdeal}) = ["Mw"]
 
 function transform_params(::Type{GCAlyLeeIdeal},params,groups)
     components = groups.components
@@ -44,11 +46,11 @@ function recombine_impl!(model::GCAlyLeeIdeal)
     for i in 1:length(model)
         #res +=z[i]*(log(z[i]/V))/Σz
         ni = n[i]
-        _a = (dot(a.values,ni) + 2.35963503)*8.31433/R̄
-        _b = (dot(b.values,ni) - 4.20519291)*8.31433/R̄
-        _c = (dot(c.values,ni) + 500.64232045)
-        _d = (dot(d.values,ni) + 3.44955031)*8.31433/R̄
-        _e = (dot(e.values,ni) + 514.21006282)
+        _a = (dot(a,ni) + 2.35963503)*8.31433/R̄
+        _b = (dot(b,ni) - 4.20519291)*8.31433/R̄
+        _c = (dot(c,ni) + 500.64232045)
+        _d = (dot(d,ni) + 3.44955031)*8.31433/R̄
+        _e = (dot(e,ni) + 514.21006282)
         coeffs[i] = (_a,_b,_c,_d,_e)
     end
     return model
@@ -82,6 +84,9 @@ C = ∑Nᵢₖ*(Cᵢₖ + 500.642)
 D = ∑Nᵢₖ*(Dᵢₖ + 3.450)
 E = ∑Nᵢₖ*(Eᵢₖ + 514.210)
 ```
+## Group Fragmentation
+
+Molecule fragmentation into functional groups is available in GCIdentifier.jl, using `Burkhardt2025Groups`
 
 ## References
 
