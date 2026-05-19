@@ -373,7 +373,7 @@ function volume_impl(model::CompositeModel,p,T,z,phase,threaded,vol0)
         #there is a Helmholtz energy model in fluid and solid phases.
         #this requires checking evaluating all volumes and checking
         #what value is the correct one via Gibbs energies.
-        if !(model.fluid isa GammaPhi) && !(model.fluid isa FluidCorrelation) && !(model.solid isa SolidCorrelation)
+        if has_a_res(model.fluid) && has_a_res(model.solid)
             return default_volume_impl(model,p,T,z,phase,threaded,vol0)
         else
             #TODO: implement these when we have an actual sublimation-melting empiric model.
@@ -383,27 +383,20 @@ function volume_impl(model::CompositeModel,p,T,z,phase,threaded,vol0)
 end
 
 #dispatcher for bulk properties
-function PT_property(model::CompositeModel,p,T,z,phase,threaded,vol0,f::F,USEP::Val{UseP}) where {F,UseP}
+function PT_property(model::CompositeModel,p,T,z,phase,threaded,vol0,f::F,vol::V) where {F,V}
     
-    if model.solid === nothing
-        return PT_property(model.fluid,p,T,z,phase,threaded,vol0,f,USEP)
+    if model.solid === nothing || is_liquid(phase) || is_vapour(phase)
+        return PT_property(model.fluid,p,T,z,phase,threaded,vol0,f,vol)
     end
 
-    if model.fluid === nothing
-        return PT_property(model.solid,p,T,z,phase,threaded,vol0,f,USEP)
+    if model.fluid === nothing || is_solid(phase)
+        return PT_property(model.solid,p,T,z,phase,threaded,vol0,f,vol)
     end
 
     if is_unknown(phase) || phase == :stable
         throw(error("automatic phase detection not implemented for $(typeof(model))"))
     end
-
-    if is_liquid(phase) || is_vapour(phase)
-        return PT_property(fluid_model(model),p,T,z,phase,threaded,vol0,f,USEP)
-    elseif is_solid(phase)
-        return PT_property(solid_model(model),p,T,z,phase,threaded,vol0,f,USEP)
-    else
-        throw(error("invalid phase specifier: $phase"))
-    end
+    throw(error("invalid phase specifier: $phase"))
 end
 
 __γ_unwrap(model::CompositeModel) = __γ_unwrap(model.fluid)
@@ -414,20 +407,15 @@ saturation_model(model::CompositeModel) = model.fluid
 
 #defer bubbledew eq to the fluid field
 
-function init_preferred_method(method::typeof(bubble_pressure),model::CompositeModel,kwargs)
-    init_preferred_method(method,model.fluid,kwargs)
-end
+for prop in [:bubble_pressure,:bubble_temperature,
+    :dew_pressure,:dew_temperature,
+    :tp_flash,:ph_flash,:vt_flash,:ts_flash,:ps_flash]
 
-function init_preferred_method(method::typeof(bubble_temperature),model::CompositeModel,kwargs)
-    init_preferred_method(method,model.fluid,kwargs)
-end
-
-function init_preferred_method(method::typeof(dew_pressure),model::CompositeModel,kwargs)
-    init_preferred_method(method,model.fluid,kwargs)
-end
-
-function init_preferred_method(method::typeof(dew_temperature),model::CompositeModel,kwargs)
-    init_preferred_method(method,model.fluid,kwargs)
+    @eval begin
+        function init_preferred_method(method::typeof($prop),model::CompositeModel,kwargs)
+            init_preferred_method(method,model.fluid,kwargs)
+        end
+    end
 end
 
 function bubble_pressure(model::CompositeModel, T, x, method::ThermodynamicMethod)
@@ -446,12 +434,13 @@ function dew_temperature(model::CompositeModel, T, x, method::ThermodynamicMetho
     return dew_temperature(model.fluid, T, x, method)
 end
 
-#Michelsen TPFlash and Rachford-Rice TPFlash support
-function init_preferred_method(method::typeof(tp_flash),model::CompositeModel{<:Any,Nothing},kwargs)
-    init_preferred_method(method,model.fluid,kwargs)
-end
 
 __tpflash_cache_model(model::CompositeModel{<:Any,Nothing},p,T,z,equilibrium) = __tpflash_cache_model(model.fluid,p,T,z,equilibrium)
+
+#TODO: for svle equilibria, PTFlashWrapper should also have a solid field.
+function PTFlashWrapper(model::CompositeModel{<:GammaPhi,Nothing},p,T,z,equilibrium)
+    return PTFlashWrapper(model.fluid,p,T,z,equilibrium)
+end
 
 function gibbs_solvation(model::CompositeModel,T)
     binary_component_check(gibbs_solvation,model)
@@ -504,6 +493,34 @@ end
 
 function init_preferred_method(method::typeof(dew_temperature),model::RestrictedEquilibriaModel,kwargs)
     return FugDewTemperature(;kwargs...)
+end
+
+function _edge_pressure(model::RestrictedEquilibriaModel,T,z,v0 = nothing,crit_retry = false)
+    wrapper = __tpflash_cache_model(model,NaN,T,z,:vle)
+    return _edge_pressure(wrapper,T,z,v0,crit_retry)
+end
+
+function _edge_temperature(model::RestrictedEquilibriaModel,p,z,v0 = nothing)
+    wrapper = __tpflash_cache_model(model,p,NaN,z,:vle)
+    return _edge_temperature(wrapper,p,z,v0)
+end
+
+for xy in [:ph,:ps,:ts,:vt]
+    xyz = Symbol(xy,:_flash)
+    @eval begin 
+        function init_preferred_method(method::typeof($xyz),model::RestrictedEquilibriaModel,kwargs)
+            return RRXYFlash(;kwargs...)
+        end
+    end
+end
+
+for xy in [:qt, :qp]
+    xyz = Symbol(xy,:_flash)
+    @eval begin 
+        function init_preferred_method(method::typeof($xyz),model::RestrictedEquilibriaModel,kwargs)
+            return RRQXFlash(;kwargs...)
+        end
+    end
 end
 
 export CompositeModel

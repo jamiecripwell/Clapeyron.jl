@@ -3,7 +3,7 @@
     result = ph_flash(model, p, h, n, method::FlashMethod = GeneralizedXYFlash())
     result = ph_flash(model, p, h, n; kwargs...)
 
-Routine to solve non-reactive two-phase multicomponent flash problem. with P-H specifications.
+Routine to solve non-reactive two-phase multicomponent flash problem. With P-H specifications.
 Wrapper around [Clapeyron.xy_flash](@ref), with automatic initial point calculations.
 Inputs:
  - `p`, pressure `[Pa]`
@@ -77,6 +77,14 @@ function ph_flash_impl(model,p,h,z,method::GeneralizedXYFlash)
     isone(numphases(flash0)) && return flash0
     spec = FlashSpecifications(pressure,p,enthalpy,h)
     return xy_flash(model,spec,z,flash0,method)
+end
+
+function ph_flash_impl(model,p,h,z,method::RRXYFlash)
+    modelx = __tpflash_cache_model(model,p,NaN,z,:vle)
+    flash0 = px_flash_x0(modelx,p,h,z,enthalpy,method)
+    isone(numphases(flash0)) && return flash0
+    spec = FlashSpecifications(pressure,p,enthalpy,h)
+    return xy_flash(modelx,spec,z,flash0,method)
 end
 
 export ph_flash

@@ -2,7 +2,7 @@
     MeanIonicApproach(model::ESElectrolyteModel;salts = nothing)
 
 
-Given en explicit solvent model, returns an implicit solvent model, where are the charged components are paired to form binary salts.
+Given an explicit solvent model, returns an implicit solvent model, where the charged components are paired to form binary salts.
 If no `salts` argument is specified, the salt pairings will be created via [`Clapeyron.auto_binary_salts`](@ref).
 ## Example
 
@@ -46,9 +46,9 @@ function MeanIonicApproach(model::ESElectrolyteModel;salts = nothing)
     return MeanIonicApproach(components,model,salt)
 end
 
-function PT_property(model::MeanIonicApproach,p,T,z,phase,threaded,vol0,f::F,USEP::Val{UseP}) where {F,UseP}
+function PT_property(model::MeanIonicApproach,p,T,z,phase,threaded,vol0,f::F,vol::V) where {F,V}
     w = ion_compositions(model,z)
-    PT_property(model.model,p,T,w,phase,threaded,vol0,f,USEP)
+    PT_property(model.model,p,T,w,phase,threaded,vol0,f,vol)
 end
 
 function VT_pressure(model::MeanIonicApproach,V,T,z)
@@ -68,7 +68,7 @@ Rgas(model::ISElectrolyteIdealWrapper) = Rgas(model.model)
 
 reference_state(model::MeanIonicApproach) = reference_state(model.model)
 
-function tp_flash_K0!(K,model::ISElectrolyteModel,p,T,z)
+function tp_flash_K0!(K,model::ISElectrolyteModel,p,T,z,cache)
     neutral = ones(Bool,length(model))
     isalts = model.salt.isalts
     neutral[isalts] .= false

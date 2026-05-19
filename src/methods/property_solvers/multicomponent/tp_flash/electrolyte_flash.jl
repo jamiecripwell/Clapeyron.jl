@@ -49,6 +49,14 @@ function tp_flash_michelsen(model::ESElectrolyteModel, p, T, z, method = Michels
     # components that are allowed to be in two phases
     in_equilibria = @. !non_inx & !non_iny
 
+    if reduced && any(iszero,z)
+        for i in 1:length(z)
+            if iszero(z[i])
+                in_equilibria[i] = false
+            end
+        end
+    end
+
     # Computing the initial guess for the K vector
     TT = Base.promote_eltype(model,p,T,z)
     x = similar(z,TT)
@@ -76,21 +84,31 @@ function tp_flash_michelsen(model::ESElectrolyteModel, p, T, z, method = Michels
     elseif is_vle(equilibrium) || is_unknown(equilibrium)
         # VLE Correlation for K
         verbose && @info "K0 calculated via pure VLE correlation"
-        tp_flash_K0!(K,model,p,T,z)
+        tp_flash_K0!(K,model,p,T,z,dlnϕ_cache)
         #if we can't predict K, we use lle
         if is_unknown(equilibrium)
             Kmin,Kmax = extrema(K)
             if Kmin > 1 || Kmax < 1
                 verbose && @info "VLE correlation falied, trying LLE initial point."
-                K = K0_lle_init(model,p,T,z)
+                tpd_cache0 = similar(K),similar(K),similar(K),similar(K),Ref(_0),dlnϕ_cache
+                K_lle = K0_lle_init(model,p,T,z,tpd_cache0;reduced)
+                if any(!isone,K_lle) #only use LLE result if actually exists
+                    K .= K_lle
+                end
+                lnK .= log.(K)
+                phasey = :liquid
+                phases = (:liquid,:liquid)
             end
         end
         lnK .= log.(K)
        # volx,voly = NaN*_1,NaN*_1
     else
         verbose && @info "K0 calculated via LLE initial point (tpd)"
-        K .= K0_lle_init(model,p,T,z)
+        tpd_cache1 = similar(K),similar(K),similar(K),similar(K),Ref(_0),dlnϕ_cache
+        K .= K0_lle_init(model,p,T,z,tpd_cache1;reduced)
         lnK .= log.(K)
+        phasey = :liquid
+        phases = (:liquid,:liquid)
     end
     _1 = one(eltype(K))
     # Initial guess for phase split
@@ -131,7 +149,9 @@ function tp_flash_michelsen(model::ESElectrolyteModel, p, T, z, method = Michels
     gibbs = one(_1)
     gibbs_dem = one(_1)
     vcache = Ref((_1, _1))
-    verbose && @info "iter  status        β      error(lnK̄)            K̄"
+
+    verbose && @info "_____________________________________________________________________________________
+      iter  status     β                error(lnK̄)       K̄"
     while (error_lnK > K_tol || abs(β_old-β) > 1e-9) && it < itss && status in (RREq,RRLiquid,RRVapour)
         it += 1
         itacc += 1
@@ -181,7 +201,7 @@ function tp_flash_michelsen(model::ESElectrolyteModel, p, T, z, method = Michels
         K̄ = exp.(lnK̄)
         status = rachfordrice_status(K̄,z,non_inx,non_iny;K_tol)
 
-        verbose && @info "$it    $status   $β  $(round(error_lnK,sigdigits=4)) $K̄"
+        verbose && @info "$(__pad_val(it,4))  $(__pad_val(status,10)) $(__pad_val(β,16)) $(__pad_val(error_lnK,16)) $(repr(K̄,context = :compact => true))"
 
         # Computing error
         # error_lnK = sum((lnK .- lnK_old).^2)
@@ -229,11 +249,14 @@ function tp_flash_michelsen(model::ESElectrolyteModel, p, T, z, method = Michels
         K̄ .= y ./ x
         β = rachfordrice(K̄, z; non_inx, non_iny, K_tol, verbose)
     end
+verbose &&
+@info "_____________________________________________________________________________________
+      Final K̄ values:        $K̄
+      Final vapour fraction: $β
+      Final value of ψ:      $ψ
 
-    verbose && @info "final K̄ values:        $K̄"
-    verbose && @info "final vapour fraction: $β"
-    verbose && @info "final value of ψ:      $ψ"
-    #convergence checks (TODO, seems to fail with activity models)
+"
+
     status = rachfordrice_status(K̄,z,non_inx,non_iny;K_tol = K_tol)
     verbose && status != RREq && @info "result is single-phase (does not satisfy Rachford-Rice constraints)."
 
@@ -282,7 +305,8 @@ function tp_flash_michelsen(model::ESElectrolyteModel, p, T, z, method = Michels
         x = index_expansion(x,z_nonzero)
         y = index_expansion(y,z_nonzero)
     end
-    return x, y, β, (vx,vy)
+    tp_flash_lle = is_liquid(phasex) && is_liquid(phasey)
+    return x, y, β, (vx,vy), tp_flash_lle
 end
 
 function bound_electrochemical_potential(K,Z)

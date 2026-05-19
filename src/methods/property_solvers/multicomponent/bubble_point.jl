@@ -56,7 +56,7 @@ function _extended_saturation_pressure(pure, T, _crit, crit_retry)
         sat = saturation_pressure(pure,T,crit_retry = false)
         if isnan(first(sat))
             if !crit_retry
-                return sat,fail3,:fail
+                return sat,fail3,:failure
             end
         else
             return sat,fail3,:success
@@ -115,7 +115,7 @@ function _extended_saturation_temperature(pure, p, _crit, crit_retry)
         sat::NTuple{3,X} = saturation_temperature(pure,p,crit_retry = false)
         if isnan(first(sat))
             if !crit_retry
-                return sat,fail3,:fail #failed
+                return sat,fail3,:failure #failed
             end
         else
             return sat,fail3,:success #sucess
@@ -137,7 +137,7 @@ function _extended_saturation_temperature(pure, p, _crit, crit_retry)
         if !isnan(first(sat2))
             return X.(sat2),crit,:success
         else
-            fail3,crit,:fail
+            fail3,crit,:failure
         end
         return fail3,crit,:supercritical
     end
@@ -204,7 +204,7 @@ function __dlnPdTinvsat(pure,sat,crit,xx,is_sat_temperature,status)
             dpdT = dpdT_saturation(pure,NaN,NaN,T)
         end
         return -dpdT*Tc*Tc/Pc,log(Pc),1/Tc
-    elseif status == :fail
+    elseif status == :failure
         return sat
     else
         throw(error("dPdTsat: invalid status: $status"))
@@ -560,6 +560,7 @@ end
 function bubble_temperature_init(model,p,x,vol0,T0,y0,volatiles = FillArrays.Fill(true,length(model)),verbose = false)
     if !isnothing(y0)
         if !isnothing(T0)
+            update_temperature!(model,T0)
             if !isnothing(vol0)
                 verbose && @info "bubble_temperature: temperature,volumes and compositions already provided."
                 vl,vv = vol0
@@ -583,6 +584,7 @@ function bubble_temperature_init(model,p,x,vol0,T0,y0,volatiles = FillArrays.Fil
 
         T00,vl0,vv0,y0 = __x0_bubble_temperature(model,p,x,T0,volatiles; verbose = verbose)
         if !isnothing(T0)
+            update_temperature!(model,T0)
             verbose && @info "bubble_temperature: calculating volumes and compositions from provided temperature"
             vl = min(vl0,volume(model,p,T0,x,phase = :l))
             vv = max(vv0,volume(model,p,T0,y0,phase = :v))

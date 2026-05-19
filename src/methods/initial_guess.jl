@@ -87,7 +87,7 @@ x0_volume_gas(model,p,T) = x0_volume_gas(model,p,T,SA[1.0])
     x0_volume_solid(model,T,z)
     x0_volume_solid(model,p,T,z)
 
-Returns an initial guess to the solid volume, dependent on temperature `T` and composition `z`. Needs to be defined for EoS that support solid phase. By default returns NaN. Can be overrided if the EoS defines `is_solid(::EoSModel) = true`
+Returns an initial guess to the solid volume, dependent on temperature `T` and composition `z`. Needs to be defined for EoS that support solid phase. By default returns NaN. Can be overrided if the EoS defines `is_solid(::EoSModel) = true`.
 """
 function x0_volume_solid(model,T,z)
     if is_solid(model)
@@ -296,9 +296,7 @@ function x0_sat_pure_virial(model,T,z = SA[1.0])
     pv_eos = pressure(model,vv_virial,T,z) #eos predicted pressure, gas phase
     #calculate a suitable liquid pressure from the virial coefficient.
     pl0 = liquid_pressure_from_virial(model,T,z,B,pv_eos)
-    @show pl0
     vl = volume(model,pl0,T,z,phase = :l)
-    @show vl
     #=the basis is that p = RT/v-b - a/v2
     we can interpolate a vdW EoS between a liquid and a gas (p,v) point.
     with that, we solve for a and b
@@ -952,7 +950,7 @@ end
 """
     solve_2ph_taylor(v10,v20,a1,da1,d2a1,a2,da2,d2a2,p_scale = 1.0,μ_scale = 1.0)
 
-Solves the 2-phase problem with 1 component, using a 2nd order taylor approx in Helmholtz energy and a isothermal compressibility factor approximation for pressure.
+Solves the 2-phase problem with 1 component, using a 2nd order Taylor approx in Helmholtz energy and an isothermal compressibility factor approximation for pressure.
 """
 function solve_2ph_taylor(v10,v20,a1,da1,d2a1,a2,da2,d2a2,p_scale = 1.0,μ_scale = 1.0)
     function F0(x)
