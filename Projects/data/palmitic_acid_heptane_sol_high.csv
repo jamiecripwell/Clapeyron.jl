@@ -1,0 +1,8 @@
+Clapeyron Estimator,,,
+[method = solubility_reg],,
+T,out_x
+313.75,0.1872
+315.65,0.2252
+318.25,0.2927
+320.55,0.3596
+322.25,0.4151

@@ -1,0 +1,7 @@
+Clapeyron Estimator,,,
+[method = lle_reg,species=acetonitrile heptane],,,
+T,out_x1,out_x2
+298.15,0.9624,0.0492
+303.15,0.9588,0.0582
+308.15,0.9538,0.0768
+313.15,0.9473,0.0825

@@ -1,0 +1,9 @@
+Clapeyron Estimator,,,
+{"method" : "solubility_reg","species" : ["acetonitrile","heptane","palmitic acid"]},,
+T,out_x
+283.2,0.00032
+293.2,0.00064
+303.2,0.0016
+313.2,0.0045
+323.2,0.0156
+333.2,0.6577
